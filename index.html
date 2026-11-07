@@ -1,1034 +1,1634 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950">
+<html lang="en" class="h-full select-none">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusChat - Real-Time Multi-User Room</title>
-    <!-- Tailwind CSS CDN -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Windows 11 & Kali Linux Dual OS Simulator</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for Icons -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js for 3D Cyber Earth Model -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Segoe+UI:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-                    },
                     colors: {
-                        brand: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            400: '#818cf8',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                            900: '#312e81',
-                        }
+                        winBlue: '#0078d4',
+                        kaliRed: '#ff2a2a',
+                        kaliGreen: '#00ff66',
+                        kaliDark: '#0b0f19',
                     },
-                    animation: {
-                        'pulse-glow': 'pulseGlow 3s infinite alternate',
-                        'float': 'float 4s ease-in-out infinite',
-                    },
-                    keyframes: {
-                        pulseGlow: {
-                            '0%': { boxShadow: '0 0 15px rgba(99, 102, 241, 0.2)' },
-                            '100%': { boxShadow: '0 0 35px rgba(99, 102, 241, 0.6)' }
-                        },
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0px)' },
-                            '50%': { transform: 'translateY(-8px)' }
-                        }
+                    fontFamily: {
+                        sans: ['"Segoe UI"', 'sans-serif'],
+                        mono: ['"Fira Code"', 'monospace'],
+                        tech: ['"Share Tech Mono"', 'monospace'],
                     }
                 }
             }
         }
     </script>
-    
+
     <style>
-        /* Custom Scrollbars */
+        .glass-panel {
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+        }
+
+        .kali-glass {
+            backdrop-filter: blur(15px);
+            background: rgba(11, 15, 25, 0.88);
+            border: 1px solid rgba(0, 255, 102, 0.25);
+            box-shadow: 0 0 25px rgba(0, 255, 102, 0.15);
+        }
+        
+        .win-shadow {
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35), 0 0 1px rgba(255, 255, 255, 0.15);
+        }
+
+        .loader-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #0078d4;
+            animation: dotFlashing 1.4s infinite ease-in-out both;
+        }
+        .loader-dot:nth-child(1) { animation-delay: 0s; }
+        .loader-dot:nth-child(2) { animation-delay: 0.2s; }
+        .loader-dot:nth-child(3) { animation-delay: 0.4s; }
+        .loader-dot:nth-child(4) { animation-delay: 0.6s; }
+
+        @keyframes dotFlashing {
+            0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Glitch Effect for Hack Transition */
+        @keyframes systemGlitch {
+            0% { transform: translate(0); filter: hue-rotate(0deg); }
+            20% { transform: translate(-5px, 5px) skewX(5deg); filter: hue-rotate(90deg); }
+            40% { transform: translate(5px, -5px) skewY(-5deg); filter: invert(100%); }
+            60% { transform: translate(-10px, 0); filter: saturate(5); }
+            80% { transform: translate(10px, -2px); filter: contrast(300%); }
+            100% { transform: translate(0); filter: hue-rotate(0deg); }
+        }
+
+        .glitch-active {
+            animation: systemGlitch 0.12s infinite;
+        }
+
+        /* Face Scanner HUD Overlay */
+        .scan-laser {
+            background: linear-gradient(180deg, rgba(0,255,102,0) 0%, rgba(0,255,102,0.8) 50%, rgba(0,255,102,0) 100%);
+            box-shadow: 0 0 15px #00ff66;
+            animation: scanMove 2s infinite ease-in-out;
+        }
+
+        @keyframes scanMove {
+            0% { top: 0%; }
+            50% { top: 90%; }
+            100% { top: 0%; }
+        }
+
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.6);
+            background: transparent;
         }
         ::-webkit-scrollbar-thumb {
-            background: rgba(99, 102, 241, 0.4);
-            border-radius: 9999px;
+            background: rgba(150, 150, 150, 0.3);
+            border-radius: 3px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: rgba(99, 102, 241, 0.8);
+            background: rgba(150, 150, 150, 0.5);
         }
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .glass-card {
-            background: rgba(30, 41, 59, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+
+        #brightnessOverlay {
+            pointer-events: none;
+            transition: background-color 0.1s ease;
         }
     </style>
 </head>
-<body class="h-full font-sans text-slate-100 bg-slate-950 flex flex-col justify-between overflow-hidden selection:bg-brand-500 selection:text-white">
+<body class="h-full w-full overflow-hidden bg-black text-gray-100 font-sans dark" id="appBody">
 
-    <!-- Notification Toast Container -->
-    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+    <!-- Screen Brightness Filter -->
+    <div id="brightnessOverlay" class="fixed inset-0 z-[99999] bg-black/0"></div>
 
-    <!-- MAIN APP WRAPPER -->
-    <div id="app" class="relative w-full h-full flex flex-col">
-
-        <!-- ========================================== -->
-        <!-- SCREEN 1: MAIN MENU / LANDING              -->
-        <!-- ========================================== -->
-        <section id="screen-mainmenu" class="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 relative z-10 overflow-y-auto">
-            <!-- Background Decorative Orbs -->
-            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-600/20 rounded-full blur-3xl pointer-events-none animate-pulse-glow"></div>
-            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none animate-pulse-glow" style="animation-delay: 1.5s;"></div>
-
-            <div class="max-w-md w-full glass-panel p-8 rounded-3xl shadow-2xl relative z-20 text-center border border-white/10 my-auto">
-                <!-- App Logo -->
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-400 text-white shadow-lg shadow-brand-500/30 mb-6 animate-float">
-                    <i class="fa-solid fa-comments text-3xl"></i>
-                </div>
-                
-                <h1 class="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-brand-300">
-                    NexusChat
-                </h1>
-                <p class="text-slate-400 text-sm mt-2 mb-8">
-                    Instant, real-time encrypted multi-user chat rooms directly inside your browser. No registration required.
-                </p>
-
-                <!-- Menu Buttons -->
-                <div class="flex flex-col gap-4">
-                    <button id="btn-open-create-modal" class="w-full py-4 px-6 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-brand-600/30 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-3">
-                        <i class="fa-solid fa-plus-circle text-lg"></i>
-                        <span>Create New Room</span>
-                    </button>
-
-                    <button id="btn-open-join-modal" class="w-full py-4 px-6 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:text-white font-semibold rounded-xl border border-slate-700/60 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-3">
-                        <i class="fa-solid fa-right-to-bracket text-lg text-brand-400"></i>
-                        <span>Join Existing Room</span>
-                    </button>
-                </div>
-
-                <!-- Footer Status -->
-                <div class="mt-8 pt-6 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-                    <span class="flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Sync Ready
-                    </span>
-                    <span id="active-rooms-count">0 Rooms Saved</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- ========================================== -->
-        <!-- MODAL: CREATE ROOM                         -->
-        <!-- ========================================== -->
-        <div id="modal-create" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
-            <div class="glass-panel w-full max-w-lg rounded-2xl border border-slate-700 shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300">
-                <!-- Desktop Retro Header Titlebar -->
-                <div class="bg-slate-900/90 px-5 py-3 border-b border-slate-800 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
-                        <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
-                        <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-                        <span class="ml-2 text-xs font-mono font-semibold text-slate-400 uppercase tracking-wider">Create_Room_Config.exe</span>
-                    </div>
-                    <button class="btn-close-modal text-slate-400 hover:text-white transition-colors">
-                        <i class="fa-solid fa-xmark text-lg"></i>
-                    </button>
-                </div>
-
-                <form id="form-create-room" class="p-6 space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Your Display Name *</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-slate-500"></i>
-                            <input type="text" id="create-username" required maxlength="20" placeholder="e.g. Alex" class="w-full pl-10 pr-4 py-2.5 bg-slate-900/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Room Name *</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-square-poll-h absolute left-3.5 top-3.5 text-slate-500"></i>
-                            <input type="text" id="create-roomname" required maxlength="30" placeholder="e.g. Gaming Lounge, Dev Talk" class="w-full pl-10 pr-4 py-2.5 bg-slate-900/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Password (Optional)</label>
-                            <div class="relative">
-                                <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-500"></i>
-                                <input type="password" id="create-password" placeholder="Leave empty for public" class="w-full pl-10 pr-4 py-2.5 bg-slate-900/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Max Capacity</label>
-                            <div class="relative">
-                                <i class="fa-solid fa-users absolute left-3.5 top-3.5 text-slate-500"></i>
-                                <select id="create-capacity" class="w-full pl-10 pr-4 py-2.5 bg-slate-900/70 border border-slate-700/80 rounded-xl text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm appearance-none">
-                                    <option value="2">2 Members (1-on-1)</option>
-                                    <option value="5" selected>5 Members (Small Team)</option>
-                                    <option value="10">10 Members (Squad)</option>
-                                    <option value="25">25 Members (Community)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
-                        <button type="button" class="btn-close-modal px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all">Cancel</button>
-                        <button type="submit" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-brand-600/30 transition-all flex items-center gap-2">
-                            <i class="fa-solid fa-rocket"></i> Launch Room
-                        </button>
-                    </div>
-                </form>
-            </div>
+    <!-- OVERLAY: Click to Start -->
+    <div id="startOverlay" class="fixed inset-0 z-[9900] bg-black flex flex-col items-center justify-center p-6 text-center cursor-pointer transition-opacity duration-700">
+        <div class="mb-6 p-5 rounded-full bg-blue-600/20 text-blue-500 animate-pulse border border-blue-500/30">
+            <i class="fa-solid fa-power-off text-5xl"></i>
         </div>
-
-        <!-- ========================================== -->
-        <!-- MODAL: JOIN ROOM                           -->
-        <!-- ========================================== -->
-        <div id="modal-join" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
-            <div class="glass-panel w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300">
-                <div class="bg-slate-900/90 px-5 py-3 border-b border-slate-800 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
-                        <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
-                        <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-                        <span class="ml-2 text-xs font-mono font-semibold text-slate-400 uppercase tracking-wider">Join_Room_Terminal.exe</span>
-                    </div>
-                    <button class="btn-close-modal text-slate-400 hover:text-white transition-colors">
-                        <i class="fa-solid fa-xmark text-lg"></i>
-                    </button>
-                </div>
-
-                <form id="form-join-room" class="p-6 space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Your Display Name *</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-slate-500"></i>
-                            <input type="text" id="join-username" required maxlength="20" placeholder="e.g. Jordan" class="w-full pl-10 pr-4 py-2.5 bg-slate-900/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">6-Digit Room Code *</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-hashtag absolute left-3.5 top-3.5 text-slate-500"></i>
-                            <input type="text" id="join-roomcode" required maxlength="6" placeholder="e.g. X7K9A2" class="w-full pl-10 pr-4 py-2.5 uppercase font-mono tracking-widest bg-slate-900/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Room Password (If required)</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-key absolute left-3.5 top-3.5 text-slate-500"></i>
-                            <input type="password" id="join-password" placeholder="Enter password if protected" class="w-full pl-10 pr-4 py-2.5 bg-slate-900/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm">
-                        </div>
-                    </div>
-
-                    <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
-                        <button type="button" class="btn-close-modal px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all">Cancel</button>
-                        <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2">
-                            <i class="fa-solid fa-right-to-bracket"></i> Connect
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- SCREEN 2: CHAT LOBBY                      -->
-        <!-- ========================================== -->
-        <section id="screen-chat" class="flex-1 flex flex-col h-full hidden overflow-hidden relative">
-
-            <!-- LOBBY HEADER BAR -->
-            <header class="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 z-20">
-                <div class="flex items-center gap-3">
-                    <button id="btn-toggle-sidebar" class="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">
-                        <i class="fa-solid fa-users text-lg"></i>
-                    </button>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <h2 id="display-room-name" class="font-bold text-white text-base sm:text-lg truncate max-w-[150px] sm:max-w-xs">Room Name</h2>
-                            <span id="display-lock-icon" class="text-xs text-amber-400 hidden"><i class="fa-solid fa-lock"></i></span>
-                        </div>
-                        <div class="flex items-center gap-2 text-xs text-slate-400">
-                            <span>Code:</span>
-                            <button id="btn-copy-code" class="font-mono bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded border border-slate-700 text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1 group" title="Click to Copy Code">
-                                <span id="display-room-code">XXXXXX</span>
-                                <i class="fa-regular fa-copy text-[10px] group-hover:scale-110 transition-transform"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Action Controls -->
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="btn-share-link" class="hidden sm:flex px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-medium border border-slate-700 items-center gap-1.5 transition-all">
-                        <i class="fa-solid fa-share-nodes text-brand-400"></i>
-                        <span>Invite</span>
-                    </button>
-                    <button id="btn-clear-chat" class="p-2 sm:px-3 sm:py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-rose-400 rounded-lg text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-all" title="Clear Local Messages">
-                        <i class="fa-solid fa-trash-can"></i>
-                        <span class="hidden sm:inline">Clear</span>
-                    </button>
-                    <button id="btn-leave-room" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                        <span>Leave</span>
-                    </button>
-                </div>
-            </header>
-
-            <!-- LOBBY MAIN CONTENT (CHAT & SIDEBAR) -->
-            <div class="flex-1 flex overflow-hidden relative">
-
-                <!-- MAIN CHAT FEED AREA -->
-                <div class="flex-1 flex flex-col justify-between overflow-hidden bg-slate-950/60 relative">
-                    
-                    <!-- MESSAGES LIST CONTAINER -->
-                    <div id="messages-container" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-                        <!-- Messages dynamically injected here -->
-                    </div>
-
-                    <!-- EMOJI PICKER DRAWER -->
-                    <div id="emoji-drawer" class="hidden absolute bottom-20 left-4 z-30 w-72 sm:w-80 glass-panel rounded-2xl border border-slate-700 p-3 shadow-2xl transition-all">
-                        <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            <span>Quick Reactions</span>
-                            <button id="btn-close-emoji" class="hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-                        </div>
-                        <div class="grid grid-cols-6 gap-2 max-h-48 overflow-y-auto p-1" id="emoji-grid">
-                            <!-- Popular Emojis -->
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">👍</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">❤️</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">😂</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">🔥</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">🎉</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">🚀</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">😍</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">😮</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">😢</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">🙏</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">👏</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">💯</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">😎</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">🤔</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">💀</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">✨</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">👀</button>
-                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">🙌</button>
-                        </div>
-                    </div>
-
-                    <!-- BOTTOM INPUT DOCK -->
-                    <div class="p-3 sm:p-4 bg-slate-900/90 border-t border-slate-800 shrink-0">
-                        <form id="form-send-message" class="flex items-center gap-2">
-                            <!-- Emoji Toggle Button -->
-                            <button type="button" id="btn-toggle-emoji" class="p-2.5 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition-colors shrink-0">
-                                <i class="fa-solid fa-face-smile text-xl"></i>
-                            </button>
-
-                            <!-- Quick Image Placeholder Trigger -->
-                            <button type="button" id="btn-send-image" class="p-2.5 text-slate-400 hover:text-brand-400 hover:bg-slate-800 rounded-xl transition-colors shrink-0 hidden sm:block" title="Send Quick Reaction Card">
-                                <i class="fa-solid fa-image text-lg"></i>
-                            </button>
-
-                            <!-- Message Input Field -->
-                            <div class="flex-1 relative">
-                                <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off" class="w-full py-3 px-4 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm transition-all">
-                            </div>
-
-                            <!-- Send Button -->
-                            <button type="submit" id="btn-send" class="py-3 px-5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl shadow-lg shadow-brand-600/30 transition-all flex items-center justify-center shrink-0">
-                                <i class="fa-solid fa-paper-plane text-sm"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- SIDEBAR MEMBERS DRAWER -->
-                <aside id="sidebar-members" class="absolute md:relative right-0 top-0 bottom-0 w-64 bg-slate-900/95 border-l border-slate-800 flex flex-col z-20 transition-transform duration-300 translate-x-full md:translate-x-0">
-                    <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-users text-brand-400 text-sm"></i>
-                            <h3 class="font-bold text-sm text-white">Active Members</h3>
-                        </div>
-                        <span id="member-capacity-badge" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-brand-400 border border-slate-700">0/0</span>
-                    </div>
-
-                    <div id="members-list" class="flex-1 overflow-y-auto p-3 space-y-2">
-                        <!-- Dynamic member list rendered here -->
-                    </div>
-
-                    <!-- Sidebar Footer Info -->
-                    <div class="p-3 bg-slate-950/60 border-t border-slate-800 text-center">
-                        <p class="text-[11px] text-slate-400">
-                            <i class="fa-solid fa-bolt text-amber-400 mr-1"></i> Live Broadcast active across tabs
-                        </p>
-                    </div>
-                </aside>
-            </div>
-        </section>
-
+        <h1 class="text-2xl sm:text-3xl font-semibold mb-2 text-white">Click or Tap Anywhere to Power On</h1>
+        <p class="text-sm text-gray-400 max-w-sm">System will load core audio drivers, bios boot sequence, and OS security subroutines.</p>
     </div>
 
-    <!-- MAIN JAVASCRIPT APP LOGIC -->
-    <script>
-        (function() {
-            // =========================================================================
-            // STATE MANAGEMENT & STORAGE HELPER
-            // =========================================================================
-            const STORAGE_KEY_ROOMS = 'nexus_chat_rooms_db';
-            const STORAGE_KEY_SESSION = 'nexus_chat_current_session';
+    <!-- STAGE 1: LINUX BOOT TERMINAL -->
+    <div id="linuxBoot" class="fixed inset-0 z-[8000] bg-black font-mono text-xs sm:text-sm p-4 overflow-hidden flex flex-col justify-end hidden leading-tight select-text">
+        <div id="linuxLog" class="overflow-y-auto max-h-full space-y-0.5"></div>
+    </div>
 
-            let state = {
-                currentUserId: getOrCreateUserId(),
-                username: '',
-                roomCode: null,
-                roomData: null,
-                messages: [],
-                channel: null
+    <!-- STAGE 2: WINDOWS LOGO & BOOT LOADER -->
+    <div id="windowsBoot" class="fixed inset-0 z-[7000] bg-black flex flex-col items-center justify-center hidden opacity-0 transition-opacity duration-1000">
+        <div class="grid grid-cols-2 gap-1.5 w-24 h-24 mb-16 sm:w-32 sm:h-32">
+            <div class="bg-sky-500 rounded-sm"></div>
+            <div class="bg-sky-500 rounded-sm"></div>
+            <div class="bg-sky-500 rounded-sm"></div>
+            <div class="bg-sky-500 rounded-sm"></div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+        </div>
+        <p class="text-xs text-gray-400 mt-6 font-mono tracking-wider">Starting Windows Security Engine...</p>
+    </div>
+
+    <!-- STAGE 3: LOCK & SIGN-IN SCREEN (DESKTOP IS COMPLETELY HIDDEN BEHIND THIS) -->
+    <div id="lockScreen" class="fixed inset-0 z-[6000] bg-cover bg-center flex flex-col justify-between p-6 sm:p-12 transition-all duration-700 backdrop-blur-md hidden opacity-0" style="background-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop');">
+        
+        <!-- Date / Clock Header -->
+        <div class="text-center mt-6 cursor-pointer select-none" id="lockClockContainer" onclick="showAuthSelection()">
+            <h1 id="lockTime" class="text-6xl sm:text-8xl font-light tracking-tight text-white drop-shadow-md">00:00</h1>
+            <h2 id="lockDate" class="text-lg sm:text-2xl font-normal text-gray-200 mt-2 drop-shadow">Monday, January 1</h2>
+            <p id="clickToUnlockHint" class="text-xs text-blue-300 mt-3 animate-bounce">Click anywhere to unlock system</p>
+        </div>
+
+        <!-- AUTHENTICATION CONTAINER (PIN & FACE ID) -->
+        <div class="flex flex-col items-center mb-6 space-y-4">
+            
+            <!-- Standard PIN Login UI -->
+            <div id="loginForm" class="flex flex-col items-center space-y-4 max-w-xs w-full transition-all duration-500">
+                <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-white/40 overflow-hidden shadow-2xl flex items-center justify-center bg-blue-600/30 backdrop-blur-md">
+                    <i class="fa-solid fa-user text-3xl sm:text-4xl text-gray-100"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-white drop-shadow">Administrator</h3>
+
+                <!-- PIN Display Indicator Dots -->
+                <div class="flex space-x-3 my-1" id="pinDots">
+                    <div class="w-3.5 h-3.5 rounded-full border border-white/40 bg-white/10"></div>
+                    <div class="w-3.5 h-3.5 rounded-full border border-white/40 bg-white/10"></div>
+                    <div class="w-3.5 h-3.5 rounded-full border border-white/40 bg-white/10"></div>
+                    <div class="w-3.5 h-3.5 rounded-full border border-white/40 bg-white/10"></div>
+                </div>
+                
+                <!-- PIN Status / Error Text -->
+                <p id="pinMsg" class="text-xs text-gray-300">Enter PIN (Default: <span class="text-sky-300 font-mono font-bold">1234</span>)</p>
+
+                <!-- Keypad Grid -->
+                <div class="grid grid-cols-3 gap-2 w-full max-w-[220px]">
+                    <button onclick="appendPin('1')" class="py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white font-semibold text-base backdrop-blur-md border border-white/10">1</button>
+                    <button onclick="appendPin('2')" class="py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white font-semibold text-base backdrop-blur-md border border-white/10">2</button>
+                    <button onclick="appendPin('3')" class="py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white font-semibold text-base backdrop-blur-md border border-white/10">3</button>
+                    <button onclick="appendPin('4')" class="py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white font-semibold text-base backdrop-blur-md border border-white/10">4</button>
+                    <button onclick="appendPin('5')" class="py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white font-semibold text-base backdrop-blur-md border border-white/10">5</button>
+                    <button onclick="appendPin('6')" class="py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white font-semibold text-base backdrop-blur-md border border-white/10">6</button>
+                    <button onclick="appendPin('7')" class="py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white font-semibold text-base backdrop-blur-md border border-white/10">7</button>
+                    <button onclick="appendPin('8')" class="py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white font-semibold text-base backdrop-blur-md border border-white/10">8</button>
+                    <button onclick="appendPin('9')" class="py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white font-semibold text-base backdrop-blur-md border border-white/10">9</button>
+                    <button onclick="clearPin()" class="py-2.5 rounded-xl bg-red-600/30 hover:bg-red-600/50 text-white text-xs backdrop-blur-md border border-red-500/20">Clear</button>
+                    <button onclick="appendPin('0')" class="py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white font-semibold text-base backdrop-blur-md border border-white/10">0</button>
+                    <button onclick="executePinSignIn()" class="py-2.5 rounded-xl bg-blue-600/80 hover:bg-blue-600 text-white text-xs backdrop-blur-md border border-blue-400/30 font-semibold"><i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+
+                <!-- Face Login Switch Button -->
+                <div class="pt-2">
+                    <button onclick="startFaceScanUI()" class="px-4 py-2 rounded-full bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 text-xs font-semibold backdrop-blur-md flex items-center space-x-2 transition">
+                        <i class="fa-solid fa-face-smile text-sm"></i>
+                        <span>Use Face ID Unlock</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Face Scanner Camera Modal UI -->
+            <div id="faceScanModal" class="hidden flex-col items-center space-y-3 bg-neutral-900/90 border border-emerald-500/30 p-5 rounded-2xl backdrop-blur-xl win-shadow max-w-xs w-full text-center">
+                <div class="relative w-48 h-48 rounded-xl overflow-hidden border-2 border-emerald-400 bg-black flex items-center justify-center">
+                    <video id="webcamVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                    <!-- Laser & Face Target Box Overlay -->
+                    <div class="absolute inset-0 border-2 border-dashed border-emerald-400/60 m-4 rounded-lg pointer-events-none"></div>
+                    <div class="scan-laser absolute left-0 right-0 h-2"></div>
+                    <div id="scanStatusOverlay" class="absolute bottom-2 left-2 right-2 bg-black/70 py-1 px-2 rounded text-[10px] font-mono text-emerald-400 border border-emerald-500/30">
+                        Initializing Camera...
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <h4 class="text-sm font-semibold text-white">Biometric Face Scanner</h4>
+                    <p id="faceScanSubText" class="text-[11px] text-gray-300 font-mono">Position face in center frame</p>
+                </div>
+                <button onclick="cancelFaceScan()" class="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-xs text-gray-300">
+                    Cancel & Return to PIN
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOBILE ORIENTATION WARNING BANNER -->
+    <div id="orientationBanner" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-[9990] bg-blue-900/90 border border-blue-400/30 text-white px-4 py-2.5 rounded-full shadow-2xl backdrop-blur-lg flex items-center space-x-3 text-xs sm:text-sm animate-bounce">
+        <i class="fa-solid fa-rotate text-blue-400 text-base"></i>
+        <span>Rotate device to landscape for optimal OS desktop layout!</span>
+        <button onclick="document.getElementById('orientationBanner').classList.add('hidden')" class="ml-2 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <!-- MAIN WINDOWS DESKTOP ENVIRONMENT (HIDDEN UNTIL SIGNED IN) -->
+    <div id="desktopEnv" class="relative w-full h-full overflow-hidden bg-cover bg-center transition-all duration-500 hidden" style="background-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop');">
+        
+        <!-- Desktop Shortcuts Grid -->
+        <div class="p-4 grid grid-flow-col grid-rows-6 gap-4 w-max max-h-[calc(100vh-50px)] z-10 relative">
+            <div onclick="openApp('ai')" class="w-20 h-22 flex flex-col items-center justify-center p-2 rounded-lg hover:bg-white/10 active:bg-white/20 border border-transparent hover:border-white/10 transition-colors cursor-pointer group text-center">
+                <i class="fa-solid fa-robot text-3xl text-emerald-400 drop-shadow-md group-hover:scale-110 transition-transform"></i>
+                <span class="text-xs text-white drop-shadow mt-1.5 font-medium line-clamp-1">AI Assistant</span>
+            </div>
+            <div onclick="openApp('music')" class="w-20 h-22 flex flex-col items-center justify-center p-2 rounded-lg hover:bg-white/10 active:bg-white/20 border border-transparent hover:border-white/10 transition-colors cursor-pointer group text-center">
+                <i class="fa-solid fa-compact-disc text-3xl text-purple-400 drop-shadow-md group-hover:scale-110 transition-transform"></i>
+                <span class="text-xs text-white drop-shadow mt-1.5 font-medium line-clamp-1">Music Player</span>
+            </div>
+            <div onclick="openApp('explorer')" class="w-20 h-22 flex flex-col items-center justify-center p-2 rounded-lg hover:bg-white/10 active:bg-white/20 border border-transparent hover:border-white/10 transition-colors cursor-pointer group text-center">
+                <i class="fa-solid fa-folder-closed text-3xl text-amber-400 drop-shadow-md group-hover:scale-110 transition-transform"></i>
+                <span class="text-xs text-white drop-shadow mt-1.5 font-medium line-clamp-1">This PC</span>
+            </div>
+            <div onclick="openApp('cmd')" class="w-20 h-22 flex flex-col items-center justify-center p-2 rounded-lg hover:bg-white/10 active:bg-white/20 border border-transparent hover:border-white/10 transition-colors cursor-pointer group text-center">
+                <i class="fa-solid fa-terminal text-3xl text-gray-200 drop-shadow-md group-hover:scale-110 transition-transform"></i>
+                <span class="text-xs text-white drop-shadow mt-1.5 font-medium line-clamp-1">Terminal</span>
+            </div>
+            <div onclick="openApp('edge')" class="w-20 h-22 flex flex-col items-center justify-center p-2 rounded-lg hover:bg-white/10 active:bg-white/20 border border-transparent hover:border-white/10 transition-colors cursor-pointer group text-center">
+                <i class="fa-brands fa-edge text-3xl text-sky-400 drop-shadow-md group-hover:scale-110 transition-transform"></i>
+                <span class="text-xs text-white drop-shadow mt-1.5 font-medium line-clamp-1">Browser</span>
+            </div>
+            <div onclick="openApp('paint')" class="w-20 h-22 flex flex-col items-center justify-center p-2 rounded-lg hover:bg-white/10 active:bg-white/20 border border-transparent hover:border-white/10 transition-colors cursor-pointer group text-center">
+                <i class="fa-solid fa-palette text-3xl text-pink-400 drop-shadow-md group-hover:scale-110 transition-transform"></i>
+                <span class="text-xs text-white drop-shadow mt-1.5 font-medium line-clamp-1">Paint</span>
+            </div>
+            <div onclick="openApp('settings')" class="w-20 h-22 flex flex-col items-center justify-center p-2 rounded-lg hover:bg-white/10 active:bg-white/20 border border-transparent hover:border-white/10 transition-colors cursor-pointer group text-center">
+                <i class="fa-solid fa-gear text-3xl text-gray-300 drop-shadow-md group-hover:scale-110 transition-transform"></i>
+                <span class="text-xs text-white drop-shadow mt-1.5 font-medium line-clamp-1">Settings</span>
+            </div>
+        </div>
+
+        <!-- WINDOW CONTAINER AREA -->
+        <div id="windowContainer" class="absolute inset-0 pb-12 overflow-hidden pointer-events-none"></div>
+
+        <!-- START MENU MODAL -->
+        <div id="startMenu" class="hidden fixed bottom-14 left-1/2 -translate-x-1/2 w-[92vw] sm:w-[520px] max-h-[80vh] bg-neutral-900/85 text-white rounded-2xl glass-panel border border-white/10 win-shadow z-[5000] p-6 flex flex-col transition-all duration-300 origin-bottom scale-95 opacity-0">
+            <div class="relative mb-6">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" placeholder="Search apps, settings, or system files..." class="w-full bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 text-xs sm:text-sm text-gray-200 placeholder-gray-400 focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="flex-1 overflow-y-auto mb-4">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-semibold text-gray-300 uppercase tracking-wider">Pinned Applications</span>
+                </div>
+                <div class="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                    <div onclick="openApp('ai'); toggleStartMenu()" class="flex flex-col items-center p-2.5 rounded-xl hover:bg-white/10 transition cursor-pointer">
+                        <i class="fa-solid fa-robot text-2xl text-emerald-400 mb-1"></i>
+                        <span class="text-[11px] text-gray-200">AI Assistant</span>
+                    </div>
+                    <div onclick="openApp('music'); toggleStartMenu()" class="flex flex-col items-center p-2.5 rounded-xl hover:bg-white/10 transition cursor-pointer">
+                        <i class="fa-solid fa-compact-disc text-2xl text-purple-400 mb-1"></i>
+                        <span class="text-[11px] text-gray-200">Music</span>
+                    </div>
+                    <div onclick="openApp('explorer'); toggleStartMenu()" class="flex flex-col items-center p-2.5 rounded-xl hover:bg-white/10 transition cursor-pointer">
+                        <i class="fa-solid fa-folder-closed text-2xl text-amber-400 mb-1"></i>
+                        <span class="text-[11px] text-gray-200">Explorer</span>
+                    </div>
+                    <div onclick="openApp('cmd'); toggleStartMenu()" class="flex flex-col items-center p-2.5 rounded-xl hover:bg-white/10 transition cursor-pointer">
+                        <i class="fa-solid fa-terminal text-2xl text-gray-200 mb-1"></i>
+                        <span class="text-[11px] text-gray-200">Terminal</span>
+                    </div>
+                    <div onclick="openApp('edge'); toggleStartMenu()" class="flex flex-col items-center p-2.5 rounded-xl hover:bg-white/10 transition cursor-pointer">
+                        <i class="fa-brands fa-edge text-2xl text-sky-400 mb-1"></i>
+                        <span class="text-[11px] text-gray-200">Edge</span>
+                    </div>
+                    <div onclick="openApp('paint'); toggleStartMenu()" class="flex flex-col items-center p-2.5 rounded-xl hover:bg-white/10 transition cursor-pointer">
+                        <i class="fa-solid fa-palette text-2xl text-pink-400 mb-1"></i>
+                        <span class="text-[11px] text-gray-200">Paint</span>
+                    </div>
+                    <div onclick="openApp('settings'); toggleStartMenu()" class="flex flex-col items-center p-2.5 rounded-xl hover:bg-white/10 transition cursor-pointer">
+                        <i class="fa-solid fa-gear text-2xl text-gray-300 mb-1"></i>
+                        <span class="text-[11px] text-gray-200">Settings</span>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-4 border-t border-white/10 flex justify-between items-center">
+                <div class="flex items-center space-x-3 hover:bg-white/10 p-1.5 rounded-full pr-3 cursor-pointer" onclick="lockOS()">
+                    <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs">U</div>
+                    <span class="text-xs font-semibold">User (Lock)</span>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="rebootSystem()" class="w-9 h-9 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-300 hover:text-white" title="Restart OS">
+                        <i class="fa-solid fa-rotate-right text-sm"></i>
+                    </button>
+                    <button onclick="lockOS()" class="w-9 h-9 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-300 hover:text-white" title="Lock Screen">
+                        <i class="fa-solid fa-lock text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUICK SETTINGS PANEL -->
+        <div id="quickSettingsPanel" class="hidden fixed bottom-14 right-3 w-[88vw] sm:w-[360px] bg-neutral-900/90 text-white rounded-2xl glass-panel border border-white/10 win-shadow z-[5010] p-4 flex flex-col space-y-4 transition-all duration-300 origin-bottom-right scale-95 opacity-0">
+            <div class="grid grid-cols-2 gap-3">
+                <button id="wifiToggle" onclick="toggleWifi()" class="flex items-center space-x-3 p-3 rounded-xl bg-blue-600 border border-white/10 transition text-left">
+                    <i class="fa-solid fa-wifi text-lg"></i>
+                    <div>
+                        <div class="text-xs font-semibold">Wi-Fi</div>
+                        <div id="wifiStatus" class="text-[10px] text-blue-100">Connected</div>
+                    </div>
+                </button>
+                <button id="btToggle" onclick="toggleBluetooth()" class="flex items-center space-x-3 p-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 transition text-left">
+                    <i class="fa-solid fa-bluetooth text-lg text-gray-300"></i>
+                    <div>
+                        <div class="text-xs font-semibold">Bluetooth</div>
+                        <div id="btStatus" class="text-[10px] text-gray-400">Off</div>
+                    </div>
+                </button>
+            </div>
+            <div class="space-y-1.5">
+                <div class="flex justify-between text-xs text-gray-300">
+                    <span><i class="fa-solid fa-volume-high mr-2"></i>Volume</span>
+                    <span id="volVal">70%</span>
+                </div>
+                <input type="range" id="volSlider" min="0" max="100" value="70" oninput="setSystemVolume(this.value)" class="w-full accent-blue-500 cursor-pointer">
+            </div>
+            <div class="space-y-1.5">
+                <div class="flex justify-between text-xs text-gray-300">
+                    <span><i class="fa-regular fa-sun mr-2"></i>Brightness</span>
+                    <span id="brightVal">100%</span>
+                </div>
+                <input type="range" id="brightSlider" min="20" max="100" value="100" oninput="setScreenBrightness(this.value)" class="w-full accent-blue-500 cursor-pointer">
+            </div>
+            <div class="p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between">
+                <div class="flex items-center space-x-3 overflow-hidden">
+                    <div class="w-10 h-10 rounded-lg bg-purple-600/30 flex items-center justify-center text-purple-400">
+                        <i class="fa-solid fa-music text-lg"></i>
+                    </div>
+                    <div class="truncate">
+                        <div id="quickTrackTitle" class="text-xs font-semibold truncate">Synthwave Calm</div>
+                        <div class="text-[10px] text-gray-400">Web Synth Audio</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleMusicPlay()" class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white hover:bg-blue-500">
+                        <i id="quickPlayIcon" class="fa-solid fa-play text-xs"></i>
+                    </button>
+                    <button onclick="nextMusicTrack()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-200 hover:bg-white/20">
+                        <i class="fa-solid fa-forward text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TASKBAR -->
+        <div class="fixed bottom-0 left-0 right-0 h-12 bg-neutral-900/85 backdrop-blur-xl border-t border-white/10 z-[5050] flex items-center justify-between px-3 select-none">
+            <div class="w-20 hidden sm:block"></div>
+            <div class="flex items-center space-x-1.5 mx-auto">
+                <button onclick="toggleStartMenu()" class="w-10 h-10 rounded-lg hover:bg-white/10 flex items-center justify-center transition group active:scale-95" title="Start Menu">
+                    <div class="grid grid-cols-2 gap-0.5 w-4 h-4 group-hover:scale-105 transition-transform">
+                        <div class="bg-sky-400 rounded-[1px]"></div>
+                        <div class="bg-sky-400 rounded-[1px]"></div>
+                        <div class="bg-sky-400 rounded-[1px]"></div>
+                        <div class="bg-sky-400 rounded-[1px]"></div>
+                    </div>
+                </button>
+                <div id="taskbarIcons" class="flex items-center space-x-1"></div>
+            </div>
+            <div class="flex items-center space-x-2 text-xs text-gray-300">
+                <div onclick="toggleQuickSettings()" class="flex items-center space-x-2.5 px-2 py-1 rounded-md hover:bg-white/10 transition cursor-pointer">
+                    <i id="trayWifiIcon" class="fa-solid fa-wifi"></i>
+                    <i id="trayVolIcon" class="fa-solid fa-volume-high"></i>
+                    <i class="fa-solid fa-battery-three-quarters text-green-400"></i>
+                </div>
+                <div onclick="lockOS()" class="flex flex-col items-end leading-tight px-2 py-1 rounded-md hover:bg-white/10 transition cursor-pointer">
+                    <span id="taskbarTime" class="font-medium text-white">00:00</span>
+                    <span id="taskbarDate" class="text-[10px] text-gray-400">1/1/2026</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECRET KALI LINUX ENVIRONMENT (TRIGGERED BY SECRET COMMAND .os_up.gone_hack) -->
+    <div id="kaliEnv" class="fixed inset-0 z-[9500] bg-kaliDark text-kaliGreen font-tech hidden flex-col select-none">
+        <!-- Top Kali Panel -->
+        <div class="h-8 bg-neutral-950 border-b border-kaliGreen/30 px-3 flex items-center justify-between text-xs">
+            <div class="flex items-center space-x-4">
+                <span class="flex items-center space-x-1 text-kaliRed font-bold tracking-wider">
+                    <i class="fa-solid fa-dragon text-sm"></i>
+                    <span>KALI LINUX CYBER-SUITE</span>
+                </span>
+                <span class="text-gray-400">root@kali-breach:~#</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span id="kaliCpuLoad" class="text-kaliGreen">CPU: 42%</span>
+                <span id="kaliRamLoad" class="text-sky-400">RAM: 3.8GB/16GB</span>
+                <span id="kaliClock" class="text-gray-200">00:00:00</span>
+                <button onclick="returnToWindowsOS()" class="px-2 py-0.5 rounded bg-kaliRed/30 hover:bg-kaliRed text-white text-[10px] border border-kaliRed transition">
+                    <i class="fa-solid fa-power-off mr-1"></i>Exit Kali
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Kali Grid Desktop -->
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 overflow-hidden relative">
+            
+            <!-- Left Panel: 3D Earth Cyber Map -->
+            <div class="kali-glass rounded-xl p-3 flex flex-col h-full relative">
+                <div class="flex justify-between items-center border-b border-kaliGreen/30 pb-2 mb-2 text-xs font-bold text-gray-200">
+                    <span><i class="fa-solid fa-globe mr-1 text-emerald-400"></i>GLOBAL THREAT MATRIX 3D</span>
+                    <span class="animate-pulse text-kaliRed">LIVE NODE TRACKING</span>
+                </div>
+                <div id="earthContainer" class="flex-1 w-full h-full relative overflow-hidden rounded-lg bg-black">
+                    <!-- Three.js Canvas Injected Here -->
+                </div>
+                <div class="mt-2 text-[10px] font-mono text-gray-400 flex justify-between">
+                    <span>Lat: 37.7749 N | Long: -122.4194 W</span>
+                    <span>Nodes: 1,482 Active</span>
+                </div>
+            </div>
+
+            <!-- Middle Panel: Hacker Simulators (Matrix Rain & Packet Scanner) -->
+            <div class="flex flex-col space-y-4 h-full">
+                <!-- Matrix Digital Rain Canvas -->
+                <div class="kali-glass rounded-xl p-3 flex flex-col flex-1 relative overflow-hidden">
+                    <div class="flex justify-between items-center border-b border-kaliGreen/30 pb-1 mb-2 text-xs font-bold text-gray-200">
+                        <span><i class="fa-solid fa-code text-kaliGreen mr-1"></i>CYBER BREACH STREAM</span>
+                        <span class="text-[10px] text-gray-400 font-mono">PORT: 8080</span>
+                    </div>
+                    <canvas id="matrixCanvas" class="w-full flex-1 rounded bg-black"></canvas>
+                </div>
+
+                <!-- Password Brute Force Simulator -->
+                <div class="kali-glass rounded-xl p-3 flex flex-col h-44 relative">
+                    <div class="flex justify-between items-center border-b border-kaliGreen/30 pb-1 mb-2 text-xs font-bold text-gray-200">
+                        <span><i class="fa-solid fa-key text-yellow-400 mr-1"></i>HASH BRUTE-FORCE ENGINE</span>
+                        <button onclick="startBruteForce()" class="px-2 py-0.5 bg-kaliGreen/20 hover:bg-kaliGreen/40 text-kaliGreen rounded text-[10px]">Start</button>
+                    </div>
+                    <div class="font-mono text-xs space-y-1">
+                        <div>Target Hash: <span class="text-gray-400">0x9f8a...c31b</span></div>
+                        <div>Current Attempt: <span id="bruteAttempt" class="text-yellow-400">a8f9z...</span></div>
+                        <div class="w-full bg-gray-800 rounded-full h-2 mt-2 overflow-hidden border border-kaliGreen/30">
+                            <div id="bruteBar" class="bg-kaliGreen h-full w-0 transition-all duration-100"></div>
+                        </div>
+                        <div id="bruteStatus" class="text-[10px] text-gray-400 mt-1">Status: Standby</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Kali Hacker Terminal -->
+            <div class="kali-glass rounded-xl p-3 flex flex-col h-full font-mono text-xs">
+                <div class="flex justify-between items-center border-b border-kaliGreen/30 pb-2 mb-2 text-xs font-bold text-gray-200">
+                    <span><i class="fa-solid fa-terminal text-kaliGreen mr-1"></i>KALI ROOT SHELL</span>
+                    <span class="text-[10px] text-kaliRed">RETURN CMD: <span class="text-white font-bold">.os_upreturn</span></span>
+                </div>
+                <div id="kaliTermLog" class="flex-1 overflow-y-auto space-y-1 text-[11px] leading-relaxed">
+                    <div class="text-kaliGreen">___  ____ _    _   _    _ _  _ _  _ _  _</div>
+                    <div class="text-kaliGreen">|  \ |__| |    |   |    | |\ | |  |  \/ </div>
+                    <div class="text-kaliGreen">|__/ |  | |___ |   |___ | | \| |__| _/\_</div>
+                    <div class="text-gray-400 mt-1">Kali Cyber Linux 2026.4 (x86_64) - Hack Protocol Engaged.</div>
+                    <div class="text-yellow-400">Type '.os_upreturn' to restore standard Windows OS kernel.</div>
+                    <br>
+                </div>
+                <div class="pt-2 border-t border-kaliGreen/30 flex items-center space-x-2">
+                    <span class="text-kaliRed">root@kali:~#</span>
+                    <input type="text" id="kaliTermInput" class="flex-1 bg-transparent border-none outline-none text-kaliGreen font-mono" autofocus>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC ENGINE -->
+    <script>
+        // System State Variables
+        let currentZIndex = 100;
+        let openWindows = {};
+        let activeApp = null;
+        let isWifiOn = true;
+        let isBtOn = false;
+        let systemVolume = 0.7;
+        let enteredPin = "";
+        const correctPin = "1234";
+        let webcamStream = null;
+
+        // DOM Elements
+        const startOverlay = document.getElementById('startOverlay');
+        const linuxBoot = document.getElementById('linuxBoot');
+        const linuxLog = document.getElementById('linuxLog');
+        const windowsBoot = document.getElementById('windowsBoot');
+        const lockScreen = document.getElementById('lockScreen');
+        const desktopEnv = document.getElementById('desktopEnv');
+        const startMenu = document.getElementById('startMenu');
+        const quickSettingsPanel = document.getElementById('quickSettingsPanel');
+        const windowContainer = document.getElementById('windowContainer');
+        const taskbarIcons = document.getElementById('taskbarIcons');
+
+        // Initial Start Action
+        startOverlay.addEventListener('click', () => {
+            requestFullScreen();
+            startOverlay.classList.add('opacity-0');
+            setTimeout(() => {
+                startOverlay.classList.add('hidden');
+                runLinuxBootSequence();
+            }, 700);
+        });
+
+        function requestFullScreen() {
+            const doc = document.documentElement;
+            if (doc.requestFullscreen) doc.requestFullscreen().catch(()=>{});
+            else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen().catch(()=>{});
+        }
+
+        function checkOrientation() {
+            const banner = document.getElementById('orientationBanner');
+            if (window.innerWidth < 768 && window.innerHeight > window.innerWidth) {
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+        window.addEventListener('resize', checkOrientation);
+
+        // 1. LINUX BOOT SEQUENCE LOGIC
+        const bootMessages = [
+            "[  0.000000] Linux version 6.5.0-generic (gcc version 12.3.0)",
+            "[  0.004120] Command line: BOOT_IMAGE=/vmlinuz-6.5.0 root=UUID=sys-x86_64 ro quiet splash",
+            "[  0.012431] Initializing Web Audio Synthesis Subsystem...",
+            "[  0.045109] BIOS-provided physical RAM map: 16384MB usable",
+            "[  0.142099] CPU0: Intel(R) Core(TM) i9-13900K stepping 01",
+            "[  0.412980] Loading Windows Desktop Glassmorphism Module...",
+            "[  0.751203] PCI: Probing virtual audio & display hardware",
+            "[  1.298012] Starting AI Assistant Neural Bridge",
+            "[  1.542010] [OK] Reached target System Initialization",
+            "[  1.890123] [OK] Ready for User Login Session."
+        ];
+
+        function runLinuxBootSequence() {
+            linuxBoot.classList.remove('hidden');
+            let idx = 0;
+            const interval = setInterval(() => {
+                if (idx < bootMessages.length) {
+                    const line = document.createElement('div');
+                    line.className = idx % 2 === 0 ? 'text-emerald-400' : 'text-gray-200';
+                    line.textContent = bootMessages[idx];
+                    linuxLog.appendChild(line);
+                    linuxBoot.scrollTop = linuxBoot.scrollHeight;
+                    idx++;
+                } else {
+                    clearInterval(interval);
+                    setTimeout(transitionToWindowsBoot, 400);
+                }
+            }, 60);
+        }
+
+        // 2. WINDOWS BOOT LOADER
+        function transitionToWindowsBoot() {
+            linuxBoot.classList.add('hidden');
+            windowsBoot.classList.remove('hidden');
+            setTimeout(() => windowsBoot.classList.remove('opacity-0'), 50);
+
+            setTimeout(() => {
+                windowsBoot.classList.add('opacity-0');
+                setTimeout(() => {
+                    windowsBoot.classList.add('hidden');
+                    showLockScreen();
+                }, 800);
+            }, 2000);
+        }
+
+        // 3. LOCK & PIN/FACE AUTHENTICATION LOGIC
+        function showLockScreen() {
+            desktopEnv.classList.add('hidden');
+            lockScreen.classList.remove('hidden');
+            setTimeout(() => lockScreen.classList.remove('opacity-0'), 50);
+            updateClock();
+            checkOrientation();
+            clearPin();
+        }
+
+        function showAuthSelection() {
+            document.getElementById('loginForm').classList.remove('opacity-0');
+        }
+
+        // PIN Functions
+        function appendPin(digit) {
+            if (enteredPin.length < 4) {
+                enteredPin += digit;
+                updatePinDots();
+                if (enteredPin.length === 4) {
+                    setTimeout(executePinSignIn, 200);
+                }
+            }
+        }
+
+        function clearPin() {
+            enteredPin = "";
+            updatePinDots();
+            document.getElementById('pinMsg').innerHTML = `Enter PIN (Default: <span class="text-sky-300 font-mono font-bold">1234</span>)`;
+        }
+
+        function updatePinDots() {
+            const dots = document.getElementById('pinDots').children;
+            for (let i = 0; i < 4; i++) {
+                if (i < enteredPin.length) {
+                    dots[i].className = "w-3.5 h-3.5 rounded-full bg-sky-400 shadow-md border border-sky-300";
+                } else {
+                    dots[i].className = "w-3.5 h-3.5 rounded-full border border-white/40 bg-white/10";
+                }
+            }
+        }
+
+        function executePinSignIn() {
+            if (enteredPin === correctPin || enteredPin === "") {
+                playStartupChime();
+                lockScreen.classList.add('opacity-0', '-translate-y-full');
+                setTimeout(() => {
+                    lockScreen.classList.add('hidden');
+                    lockScreen.classList.remove('-translate-y-full');
+                    desktopEnv.classList.remove('hidden');
+                }, 700);
+            } else {
+                document.getElementById('pinMsg').innerHTML = `<span class="text-red-400 font-semibold animate-pulse">Incorrect PIN. Try again.</span>`;
+                setTimeout(clearPin, 1000);
+            }
+        }
+
+        // Face Scanner Camera Logic
+        async function startFaceScanUI() {
+            document.getElementById('loginForm').classList.add('hidden');
+            const faceModal = document.getElementById('faceScanModal');
+            faceModal.classList.remove('hidden');
+            faceModal.classList.add('flex');
+
+            const video = document.getElementById('webcamVideo');
+            const statusOverlay = document.getElementById('scanStatusOverlay');
+            const subText = document.getElementById('faceScanSubText');
+
+            try {
+                webcamStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = webcamStream;
+                statusOverlay.textContent = "Scanning Biometric Mesh...";
+                
+                setTimeout(() => {
+                    statusOverlay.textContent = "Extracting Features...";
+                    statusOverlay.className = "absolute bottom-2 left-2 right-2 bg-yellow-900/80 py-1 px-2 rounded text-[10px] font-mono text-yellow-300 border border-yellow-500/30";
+                }, 1200);
+
+                setTimeout(() => {
+                    statusOverlay.textContent = "FACE MATCH VERIFIED!";
+                    statusOverlay.className = "absolute bottom-2 left-2 right-2 bg-emerald-900/90 py-1 px-2 rounded text-[10px] font-mono text-emerald-300 border border-emerald-400 font-bold animate-pulse";
+                    subText.textContent = "Access Granted! Unlocking...";
+                }, 2500);
+
+                setTimeout(() => {
+                    stopCamera();
+                    cancelFaceScan();
+                    enteredPin = "1234";
+                    executePinSignIn();
+                }, 3500);
+
+            } catch (err) {
+                statusOverlay.textContent = "Camera Simulator Mode";
+                subText.textContent = "Simulating Scan Sequence...";
+                setTimeout(() => {
+                    stopCamera();
+                    cancelFaceScan();
+                    enteredPin = "1234";
+                    executePinSignIn();
+                }, 2800);
+            }
+        }
+
+        function cancelFaceScan() {
+            stopCamera();
+            const faceModal = document.getElementById('faceScanModal');
+            faceModal.classList.add('hidden');
+            faceModal.classList.remove('flex');
+            document.getElementById('loginForm').classList.remove('hidden');
+        }
+
+        function stopCamera() {
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+            }
+        }
+
+        function lockOS() {
+            if (!startMenu.classList.contains('hidden')) toggleStartMenu();
+            if (!quickSettingsPanel.classList.contains('hidden')) toggleQuickSettings();
+            showLockScreen();
+        }
+
+        function rebootSystem() {
+            if (!startMenu.classList.contains('hidden')) toggleStartMenu();
+            windowContainer.innerHTML = '';
+            openWindows = {};
+            renderTaskbar();
+            desktopEnv.classList.add('hidden');
+            windowsBoot.classList.add('hidden');
+            linuxLog.innerHTML = '';
+            runLinuxBootSequence();
+        }
+
+        // CLOCK AND DATE SYSTEM
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const mins = String(now.getMinutes()).padStart(2, '0');
+            const secs = String(now.getSeconds()).padStart(2, '0');
+            const timeStr = `${hours}:${mins}`;
+            
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            const dateStr = now.toLocaleDateString(undefined, options);
+
+            document.getElementById('lockTime').textContent = timeStr;
+            document.getElementById('lockDate').textContent = dateStr;
+            document.getElementById('taskbarTime').textContent = timeStr;
+            document.getElementById('taskbarDate').textContent = now.toLocaleDateString();
+            
+            const kaliClock = document.getElementById('kaliClock');
+            if (kaliClock) kaliClock.textContent = `${timeStr}:${secs}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // START MENU & QUICK SETTINGS TOGGLES
+        function toggleStartMenu() {
+            if (!quickSettingsPanel.classList.contains('hidden')) toggleQuickSettings();
+            if (startMenu.classList.contains('hidden')) {
+                startMenu.classList.remove('hidden');
+                setTimeout(() => startMenu.classList.remove('opacity-0', 'scale-95'), 10);
+            } else {
+                startMenu.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => startMenu.classList.add('hidden'), 300);
+            }
+        }
+
+        function toggleQuickSettings() {
+            if (!startMenu.classList.contains('hidden')) toggleStartMenu();
+            if (quickSettingsPanel.classList.contains('hidden')) {
+                quickSettingsPanel.classList.remove('hidden');
+                setTimeout(() => quickSettingsPanel.classList.remove('opacity-0', 'scale-95'), 10);
+            } else {
+                quickSettingsPanel.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => quickSettingsPanel.classList.add('hidden'), 300);
+            }
+        }
+
+        function toggleWifi() {
+            isWifiOn = !isWifiOn;
+            const btn = document.getElementById('wifiToggle');
+            const status = document.getElementById('wifiStatus');
+            const trayIcon = document.getElementById('trayWifiIcon');
+            if (isWifiOn) {
+                btn.className = "flex items-center space-x-3 p-3 rounded-xl bg-blue-600 border border-white/10 transition text-left";
+                status.textContent = "Connected";
+                trayIcon.className = "fa-solid fa-wifi";
+            } else {
+                btn.className = "flex items-center space-x-3 p-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 transition text-left";
+                status.textContent = "Disconnected";
+                trayIcon.className = "fa-solid fa-ban text-gray-500";
+            }
+        }
+
+        function toggleBluetooth() {
+            isBtOn = !isBtOn;
+            const btn = document.getElementById('btToggle');
+            const status = document.getElementById('btStatus');
+            if (isBtOn) {
+                btn.className = "flex items-center space-x-3 p-3 rounded-xl bg-blue-600 border border-white/10 transition text-left";
+                status.textContent = "On";
+            } else {
+                btn.className = "flex items-center space-x-3 p-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 transition text-left";
+                status.textContent = "Off";
+            }
+        }
+
+        function setSystemVolume(val) {
+            systemVolume = val / 100;
+            document.getElementById('volVal').textContent = `${val}%`;
+            const trayIcon = document.getElementById('trayVolIcon');
+            if (val == 0) trayIcon.className = "fa-solid fa-volume-xmark text-red-400";
+            else if (val < 50) trayIcon.className = "fa-solid fa-volume-low";
+            else trayIcon.className = "fa-solid fa-volume-high";
+            
+            if (gainNode) gainNode.gain.value = systemVolume;
+        }
+
+        function setScreenBrightness(val) {
+            document.getElementById('brightVal').textContent = `${val}%`;
+            const opacity = (100 - val) / 100 * 0.7;
+            document.getElementById('brightnessOverlay').style.backgroundColor = `rgba(0,0,0,${opacity})`;
+        }
+
+        // WEB AUDIO SYNTH MUSIC PLAYER
+        let audioCtx = null;
+        let isPlayingMusic = false;
+        let synthInterval = null;
+        let gainNode = null;
+        let currentTrackIdx = 0;
+
+        const tracks = [
+            { name: "Synthwave Calm", scale: [261.63, 293.66, 329.63, 392.00, 440.00] },
+            { name: "Cyberpunk Ambient", scale: [220.00, 246.94, 261.63, 293.66, 329.63] },
+            { name: "Lo-Fi Memory", scale: [174.61, 196.00, 220.00, 261.63, 293.66] }
+        ];
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                gainNode = audioCtx.createGain();
+                gainNode.gain.value = systemVolume;
+                gainNode.connect(audioCtx.destination);
+            }
+        }
+
+        function playStartupChime() {
+            try {
+                initAudioContext();
+                const notes = [261.63, 329.63, 392.00, 523.25];
+                notes.forEach((freq, index) => {
+                    const osc = audioCtx.createOscillator();
+                    const noteGain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + index * 0.12);
+                    noteGain.gain.setValueAtTime(0.1, audioCtx.currentTime + index * 0.12);
+                    noteGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + index * 0.12 + 0.8);
+                    osc.connect(noteGain);
+                    noteGain.connect(gainNode);
+                    osc.start(audioCtx.currentTime + index * 0.12);
+                    osc.stop(audioCtx.currentTime + index * 0.12 + 0.8);
+                });
+            } catch(e) {}
+        }
+
+        function toggleMusicPlay() {
+            initAudioContext();
+            isPlayingMusic = !isPlayingMusic;
+            updateMusicUI();
+
+            if (isPlayingMusic) {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                let step = 0;
+                synthInterval = setInterval(() => {
+                    const scale = tracks[currentTrackIdx].scale;
+                    const freq = scale[Math.floor(Math.random() * scale.length)];
+                    const osc = audioCtx.createOscillator();
+                    const noteGain = audioCtx.createGain();
+                    osc.type = step % 2 === 0 ? 'triangle' : 'sine';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    noteGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    noteGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.2);
+                    osc.connect(noteGain);
+                    noteGain.connect(gainNode);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 1.2);
+                    step++;
+                }, 400);
+            } else {
+                clearInterval(synthInterval);
+            }
+        }
+
+        function nextMusicTrack() {
+            currentTrackIdx = (currentTrackIdx + 1) % tracks.length;
+            if (isPlayingMusic) {
+                toggleMusicPlay();
+                toggleMusicPlay();
+            } else {
+                updateMusicUI();
+            }
+        }
+
+        function updateMusicUI() {
+            const iconClass = isPlayingMusic ? "fa-solid fa-pause" : "fa-solid fa-play";
+            document.getElementById('quickPlayIcon').className = `${iconClass} text-xs`;
+            document.getElementById('quickTrackTitle').textContent = tracks[currentTrackIdx].name;
+
+            const appTrack = document.getElementById('appTrackTitle');
+            const appPlayBtn = document.getElementById('appPlayBtnIcon');
+            if (appTrack) appTrack.textContent = tracks[currentTrackIdx].name;
+            if (appPlayBtn) appPlayBtn.className = iconClass;
+        }
+
+        // WINDOW MANAGER LOGIC
+        const appsConfig = {
+            ai: { title: "AI Assistant (ChatGPT)", icon: "fa-solid fa-robot text-emerald-400", width: 620, height: 480 },
+            music: { title: "Background Music Player", icon: "fa-solid fa-compact-disc text-purple-400", width: 480, height: 350 },
+            explorer: { title: "This PC - File Explorer", icon: "fa-folder-closed text-amber-400", width: 600, height: 400 },
+            cmd: { title: "Command Prompt Terminal", icon: "fa-terminal text-gray-200", width: 550, height: 380 },
+            edge: { title: "Microsoft Edge", icon: "fa-brands fa-edge text-sky-400", width: 700, height: 480 },
+            paint: { title: "Paint Canvas", icon: "fa-solid fa-palette text-pink-400", width: 620, height: 440 },
+            settings: { title: "Settings", icon: "fa-solid fa-gear text-gray-300", width: 580, height: 420 }
+        };
+
+        function openApp(id) {
+            if (openWindows[id]) {
+                bringToFront(id);
+                if (openWindows[id].minimized) toggleMinimize(id);
+                return;
+            }
+
+            const config = appsConfig[id];
+            if (!config) return;
+
+            currentZIndex++;
+
+            const win = document.createElement('div');
+            win.id = `win-${id}`;
+            win.className = `absolute rounded-xl bg-neutral-900/90 text-white border border-white/10 win-shadow glass-panel flex flex-col overflow-hidden pointer-events-auto transition-all duration-200`;
+            
+            const initialWidth = Math.min(config.width, window.innerWidth - 20);
+            const initialHeight = Math.min(config.height, window.innerHeight - 80);
+            const initialLeft = Math.max(10, (window.innerWidth - initialWidth) / 2 + (Object.keys(openWindows).length * 20));
+            const initialTop = Math.max(10, (window.innerHeight - initialHeight) / 4 + (Object.keys(openWindows).length * 20));
+
+            win.style.width = `${initialWidth}px`;
+            win.style.height = `${initialHeight}px`;
+            win.style.left = `${initialLeft}px`;
+            win.style.top = `${initialTop}px`;
+            win.style.zIndex = currentZIndex;
+
+            win.innerHTML = `
+                <div class="h-9 bg-white/5 border-b border-white/10 flex items-center justify-between px-3 cursor-move select-none" onmousedown="bringToFront('${id}')" id="handle-${id}">
+                    <div class="flex items-center space-x-2 text-xs font-semibold text-gray-200 truncate">
+                        <i class="${config.icon} text-sm"></i>
+                        <span class="truncate">${config.title}</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <button onclick="toggleMinimize('${id}')" class="w-7 h-6 rounded hover:bg-white/10 flex items-center justify-center text-xs text-gray-300 hover:text-white"><i class="fa-solid fa-minus"></i></button>
+                        <button onclick="toggleMaximize('${id}')" class="w-7 h-6 rounded hover:bg-white/10 flex items-center justify-center text-xs text-gray-300 hover:text-white"><i class="fa-regular fa-square"></i></button>
+                        <button onclick="closeApp('${id}')" class="w-7 h-6 rounded hover:bg-red-600 flex items-center justify-center text-xs text-gray-300 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+                <div class="flex-1 relative overflow-hidden bg-neutral-950/60" id="content-${id}">
+                    ${getAppHTML(id)}
+                </div>
+            `;
+
+            windowContainer.appendChild(win);
+
+            openWindows[id] = {
+                id: id,
+                element: win,
+                minimized: false,
+                maximized: false,
+                prevStyle: {}
             };
 
-            function getOrCreateUserId() {
-                let id = localStorage.getItem('nexus_user_id');
-                if (!id) {
-                    id = 'usr_' + Math.random().toString(36).substring(2, 9);
-                    localStorage.setItem('nexus_user_id', id);
-                }
-                return id;
+            makeDraggable(win, document.getElementById(`handle-${id}`));
+            renderTaskbar();
+            bringToFront(id);
+
+            if (id === 'cmd') initTerminal();
+            if (id === 'paint') initPaintCanvas();
+            if (id === 'ai') initAiChat();
+            if (id === 'music') updateMusicUI();
+        }
+
+        function closeApp(id) {
+            if (openWindows[id]) {
+                openWindows[id].element.remove();
+                delete openWindows[id];
+                renderTaskbar();
             }
+        }
 
-            // Retrieve all rooms from LocalStorage database
-            function getStoredRooms() {
-                try {
-                    const raw = localStorage.getItem(STORAGE_KEY_ROOMS);
-                    return raw ? JSON.parse(raw) : {};
-                } catch (e) {
-                    console.error('Error loading rooms', e);
-                    return {};
-                }
+        function toggleMinimize(id) {
+            const win = openWindows[id];
+            if (!win) return;
+            if (win.minimized) {
+                win.element.classList.remove('hidden');
+                win.minimized = false;
+                bringToFront(id);
+            } else {
+                win.element.classList.add('hidden');
+                win.minimized = true;
             }
+            renderTaskbar();
+        }
 
-            // Save all rooms database back to LocalStorage
-            function saveRooms(rooms) {
-                try {
-                    localStorage.setItem(STORAGE_KEY_ROOMS, JSON.stringify(rooms));
-                    // Notify other tabs via StorageEvent fallback if needed
-                    window.dispatchEvent(new Event('storage'));
-                } catch (e) {
-                    console.error('Error saving rooms', e);
-                }
+        function toggleMaximize(id) {
+            const win = openWindows[id];
+            if (!win) return;
+
+            if (!win.maximized) {
+                win.prevStyle = {
+                    width: win.element.style.width,
+                    height: win.element.style.height,
+                    left: win.element.style.left,
+                    top: win.element.style.top,
+                    borderRadius: win.element.style.borderRadius
+                };
+                win.element.style.width = '100%';
+                win.element.style.height = 'calc(100% - 48px)';
+                win.element.style.left = '0px';
+                win.element.style.top = '0px';
+                win.element.style.borderRadius = '0px';
+                win.maximized = true;
+            } else {
+                win.element.style.width = win.prevStyle.width;
+                win.element.style.height = win.prevStyle.height;
+                win.element.style.left = win.prevStyle.left;
+                win.element.style.top = win.prevStyle.top;
+                win.element.style.borderRadius = '0.75rem';
+                win.maximized = false;
             }
+        }
 
-            // =========================================================================
-            // DOM ELEMENTS REF
-            // =========================================================================
-            const screenMain = document.getElementById('screen-mainmenu');
-            const screenChat = document.getElementById('screen-chat');
-
-            const modalCreate = document.getElementById('modal-create');
-            const modalJoin = document.getElementById('modal-join');
-
-            const btnOpenCreate = document.getElementById('btn-open-create-modal');
-            const btnOpenJoin = document.getElementById('btn-open-join-modal');
-            const btnsCloseModal = document.querySelectorAll('.btn-close-modal');
-
-            const formCreate = document.getElementById('form-create-room');
-            const formJoin = document.getElementById('form-join-room');
-
-            const displayRoomName = document.getElementById('display-room-name');
-            const displayRoomCode = document.getElementById('display-room-code');
-            const displayLockIcon = document.getElementById('display-lock-icon');
-            const btnCopyCode = document.getElementById('btn-copy-code');
-            const btnLeaveRoom = document.getElementById('btn-leave-room');
-            const btnClearChat = document.getElementById('btn-clear-chat');
-            const btnShareLink = document.getElementById('btn-share-link');
-
-            const messagesContainer = document.getElementById('messages-container');
-            const formSendMessage = document.getElementById('form-send-message');
-            const chatInput = document.getElementById('chat-input');
-            
-            const btnToggleEmoji = document.getElementById('btn-toggle-emoji');
-            const emojiDrawer = document.getElementById('emoji-drawer');
-            const btnCloseEmoji = document.getElementById('btn-close-emoji');
-            const emojiGrid = document.getElementById('emoji-grid');
-            const btnSendImage = document.getElementById('btn-send-image');
-
-            const sidebarMembers = document.getElementById('sidebar-members');
-            const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
-            const membersList = document.getElementById('members-list');
-            const memberCapacityBadge = document.getElementById('member-capacity-badge');
-            const activeRoomsCountEl = document.getElementById('active-rooms-count');
-
-            // =========================================================================
-            // TOAST NOTIFICATIONS SYSTEM
-            // =========================================================================
-            function showToast(message, type = 'info') {
-                const container = document.getElementById('toast-container');
-                const toast = document.createElement('div');
-                toast.className = `p-3 px-4 rounded-xl shadow-lg border text-xs font-semibold flex items-center gap-2 transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto ${
-                    type === 'error' ? 'bg-rose-950/90 border-rose-800 text-rose-200' :
-                    type === 'success' ? 'bg-emerald-950/90 border-emerald-800 text-emerald-200' :
-                    'bg-slate-900/90 border-slate-700 text-slate-200'
-                }`;
-
-                const icon = type === 'error' ? 'fa-circle-exclamation text-rose-400' :
-                             type === 'success' ? 'fa-circle-check text-emerald-400' :
-                             'fa-circle-info text-brand-400';
-
-                toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHTML(message)}</span>`;
-                container.appendChild(toast);
-
-                setTimeout(() => {
-                    toast.classList.remove('translate-y-2', 'opacity-0');
-                }, 10);
-
-                setTimeout(() => {
-                    toast.classList.add('opacity-0', 'translate-y-2');
-                    setTimeout(() => toast.remove(), 300);
-                }, 3500);
+        function bringToFront(id) {
+            if (openWindows[id]) {
+                currentZIndex++;
+                openWindows[id].element.style.zIndex = currentZIndex;
+                activeApp = id;
+                renderTaskbar();
             }
+        }
 
-            function escapeHTML(str) {
-                return str.replace(/[&<>'"]/g, 
-                    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-                );
-            }
+        function renderTaskbar() {
+            taskbarIcons.innerHTML = '';
+            Object.keys(openWindows).forEach(id => {
+                const config = appsConfig[id];
+                const win = openWindows[id];
+                const isActive = activeApp === id && !win.minimized;
 
-            // =========================================================================
-            // MODAL CONTROLS
-            // =========================================================================
-            function openModal(modal) {
-                modal.classList.remove('hidden');
-                setTimeout(() => {
-                    modal.classList.remove('opacity-0');
-                    modal.querySelector('.transform').classList.remove('scale-95');
-                }, 10);
-            }
-
-            function closeModal(modal) {
-                modal.classList.add('opacity-0');
-                modal.querySelector('.transform').classList.add('scale-95');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                }, 300);
-            }
-
-            btnOpenCreate.addEventListener('click', () => openModal(modalCreate));
-            btnOpenJoin.addEventListener('click', () => openModal(modalJoin));
-
-            btnsCloseModal.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    closeModal(modalCreate);
-                    closeModal(modalJoin);
-                });
-            });
-
-            // Update stats on home screen
-            function updateHomeScreenStats() {
-                const rooms = getStoredRooms();
-                const count = Object.keys(rooms).length;
-                activeRoomsCountEl.textContent = `${count} Active Room${count === 1 ? '' : 's'}`;
-            }
-
-            // =========================================================================
-            // ROOM GENERATION & JOINING LOGIC
-            // =========================================================================
-            function generateRoomCode() {
-                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluded confusing chars (I, O, 1, 0)
-                let code = '';
-                for (let i = 0; i < 6; i++) {
-                    code += chars.charAt(Math.floor(Math.random() * chars.length));
-                }
-                return code;
-            }
-
-            // Form Submit: CREATE ROOM
-            formCreate.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const username = document.getElementById('create-username').value.trim();
-                const roomName = document.getElementById('create-roomname').value.trim();
-                const password = document.getElementById('create-password').value.trim();
-                const capacity = parseInt(document.getElementById('create-capacity').value, 10);
-
-                if (!username || !roomName) return;
-
-                const roomCode = generateRoomCode();
-                const rooms = getStoredRooms();
-
-                const newRoom = {
-                    code: roomCode,
-                    name: roomName,
-                    password: password || null,
-                    capacity: capacity,
-                    members: [{ id: state.currentUserId, name: username, joinedAt: Date.now() }],
-                    messages: [
-                        {
-                            id: 'msg_init_' + Date.now(),
-                            type: 'system',
-                            text: `Room "${roomName}" created by ${username}. Room Code: ${roomCode}`,
-                            timestamp: Date.now()
-                        }
-                    ]
+                const btn = document.createElement('button');
+                btn.className = `w-10 h-10 rounded-lg flex items-center justify-center transition relative ${isActive ? 'bg-white/15' : 'hover:bg-white/10'}`;
+                btn.onclick = () => {
+                    if (win.minimized) toggleMinimize(id);
+                    else if (activeApp === id) toggleMinimize(id);
+                    else bringToFront(id);
                 };
 
-                rooms[roomCode] = newRoom;
-                saveRooms(rooms);
-
-                closeModal(modalCreate);
-                joinLobby(roomCode, username);
-                showToast(`Room created! Code: ${roomCode}`, 'success');
+                btn.innerHTML = `
+                    <i class="${config.icon} text-lg"></i>
+                    ${!win.minimized ? '<span class="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-sky-400"></span>' : '<span class="absolute bottom-1 w-1 h-1 rounded-full bg-gray-500"></span>'}
+                `;
+                taskbarIcons.appendChild(btn);
             });
+        }
 
-            // Form Submit: JOIN ROOM
-            formJoin.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const username = document.getElementById('join-username').value.trim();
-                const roomCode = document.getElementById('join-roomcode').value.trim().toUpperCase();
-                const password = document.getElementById('join-password').value.trim();
+        function makeDraggable(elmnt, handle) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            handle.onmousedown = dragMouseDown;
+            handle.ontouchstart = dragTouchStart;
 
-                const rooms = getStoredRooms();
-                const room = rooms[roomCode];
-
-                if (!room) {
-                    showToast('Invalid Room Code. Room does not exist.', 'error');
-                    return;
-                }
-
-                if (room.password && room.password !== password) {
-                    showToast('Incorrect password for protected room.', 'error');
-                    return;
-                }
-
-                // Check capacity (excluding already registered current user ID)
-                const existingMemberIndex = room.members.findIndex(m => m.id === state.currentUserId);
-                if (existingMemberIndex === -1 && room.members.length >= room.capacity) {
-                    showToast('Room is already full at max capacity!', 'error');
-                    return;
-                }
-
-                closeModal(modalJoin);
-                joinLobby(roomCode, username);
-            });
-
-            // =========================================================================
-            // LOBBY INITIALIZATION & SYNC
-            // =========================================================================
-            function joinLobby(roomCode, username) {
-                state.username = username;
-                state.roomCode = roomCode;
-
-                // Load Room Data
-                const rooms = getStoredRooms();
-                const room = rooms[roomCode];
-
-                if (!room) {
-                    showToast('Failed to enter room. Data corrupted.', 'error');
-                    return;
-                }
-
-                state.roomData = room;
-
-                // Add member if not already added
-                let member = room.members.find(m => m.id === state.currentUserId);
-                if (!member) {
-                    member = { id: state.currentUserId, name: username, joinedAt: Date.now() };
-                    room.members.push(member);
-
-                    // Add system message for join
-                    room.messages.push({
-                        id: 'msg_sys_' + Date.now(),
-                        type: 'system',
-                        text: `${username} joined the room.`,
-                        timestamp: Date.now()
-                    });
-
-                    saveRooms(rooms);
-                } else {
-                    // Update display name if changed
-                    member.name = username;
-                    saveRooms(rooms);
-                }
-
-                // Setup BroadcastChannel for Instant Cross-Tab Realtime Messaging
-                setupBroadcastChannel(roomCode);
-
-                // Save session in local storage for refresh recovery
-                localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({
-                    roomCode: roomCode,
-                    username: username
-                }));
-
-                // Switch UI Screens
-                screenMain.classList.add('hidden');
-                screenChat.classList.remove('hidden');
-
-                // Update Room Header
-                displayRoomName.textContent = room.name;
-                displayRoomCode.textContent = room.code;
-                if (room.password) {
-                    displayLockIcon.classList.remove('hidden');
-                } else {
-                    displayLockIcon.classList.add('hidden');
-                }
-
-                // Render Active Content
-                renderMembers();
-                renderMessages();
-
-                // Notify other tabs via channel
-                broadcastEvent('USER_JOINED', { username, id: state.currentUserId });
+            function dragMouseDown(e) {
+                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
             }
 
-            // Setup Real-time Inter-Tab Communication
-            function setupBroadcastChannel(code) {
-                if (state.channel) {
-                    state.channel.close();
-                }
-
-                state.channel = new BroadcastChannel(`nexus_room_${code}`);
-                state.channel.onmessage = (event) => {
-                    const { type, payload } = event.data;
-
-                    if (type === 'NEW_MESSAGE' || type === 'USER_JOINED' || type === 'USER_LEFT' || type === 'CHAT_CLEARED') {
-                        // Reload state from local storage to keep sync
-                        const rooms = getStoredRooms();
-                        if (rooms[code]) {
-                            state.roomData = rooms[code];
-                            renderMessages();
-                            renderMembers();
-                        }
-                    }
-                };
+            function elementDrag(e) {
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
             }
 
-            function broadcastEvent(type, payload = {}) {
-                if (state.channel) {
-                    state.channel.postMessage({ type, payload });
-                }
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
             }
 
-            // =========================================================================
-            // MESSAGING & RENDERING
-            // =========================================================================
-            function renderMessages() {
-                if (!state.roomData) return;
-                messagesContainer.innerHTML = '';
+            function dragTouchStart(e) {
+                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                const touch = e.touches[0];
+                pos3 = touch.clientX;
+                pos4 = touch.clientY;
+                document.ontouchend = closeTouchDrag;
+                document.ontouchmove = touchDrag;
+            }
 
-                const messages = state.roomData.messages || [];
+            function touchDrag(e) {
+                const touch = e.touches[0];
+                pos1 = pos3 - touch.clientX;
+                pos2 = pos4 - touch.clientY;
+                pos3 = touch.clientX;
+                pos4 = touch.clientY;
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+            }
 
-                messages.forEach(msg => {
-                    const msgEl = document.createElement('div');
+            function closeTouchDrag() {
+                document.ontouchend = null;
+                document.ontouchmove = null;
+            }
+        }
 
-                    if (msg.type === 'system') {
-                        // System pill message
-                        msgEl.className = 'flex justify-center my-2';
-                        msgEl.innerHTML = `
-                            <span class="px-3 py-1 rounded-full bg-slate-900/80 border border-slate-800 text-slate-400 text-xs flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-circle-info text-[10px] text-brand-400"></i>
-                                ${escapeHTML(msg.text)}
-                            </span>
-                        `;
-                    } else {
-                        // User message
-                        const isSelf = msg.userId === state.currentUserId;
-                        const formattedTime = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                        msgEl.className = `flex flex-col ${isSelf ? 'items-end' : 'items-start'} my-2`;
-
-                        // Generate deterministic avatar color based on name
-                        const avatarBg = getAvatarColor(msg.sender);
-
-                        msgEl.innerHTML = `
-                            <div class="flex items-end gap-2 max-w-[85%] sm:max-w-[70%] ${isSelf ? 'flex-row-reverse' : 'flex-row'}">
-                                <!-- Avatar -->
-                                <div class="w-8 h-8 rounded-full ${avatarBg} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-md">
-                                    ${escapeHTML(msg.sender.charAt(0).toUpperCase())}
-                                </div>
-
-                                <!-- Message Bubble -->
-                                <div class="flex flex-col ${isSelf ? 'items-end' : 'items-start'}">
-                                    <div class="flex items-center gap-2 mb-1 px-1">
-                                        <span class="text-xs font-semibold text-slate-400">${escapeHTML(msg.sender)}</span>
-                                        <span class="text-[10px] text-slate-500">${formattedTime}</span>
-                                    </div>
-                                    <div class="${
-                                        isSelf 
-                                        ? 'bg-brand-600 text-white rounded-2xl rounded-tr-none px-4 py-2.5 shadow-md' 
-                                        : 'bg-slate-800 text-slate-100 border border-slate-700/80 rounded-2xl rounded-tl-none px-4 py-2.5 shadow-md'
-                                    } break-words text-sm leading-relaxed">
-                                        ${msg.mediaUrl ? `<img src="${msg.mediaUrl}" class="rounded-lg max-h-48 w-full object-cover mb-2 border border-black/20" alt="Attachment" onerror="this.remove()"/>` : ''}
-                                        ${escapeHTML(msg.text)}
+        // APPS INNER HTML TEMPLATES
+        function getAppHTML(id) {
+            switch (id) {
+                case 'ai':
+                    return `
+                        <div class="h-full flex flex-col bg-neutral-900 text-xs">
+                            <div id="aiChatBox" class="flex-1 p-4 overflow-y-auto space-y-3">
+                                <div class="flex items-start space-x-2">
+                                    <div class="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold"><i class="fa-solid fa-robot text-xs"></i></div>
+                                    <div class="bg-white/10 p-3 rounded-2xl rounded-tl-none max-w-[80%] text-gray-200">
+                                        Hello User! I am your Windows AI Assistant. Ask me anything or type terminal secrets!
                                     </div>
                                 </div>
                             </div>
-                        `;
-                    }
-
-                    messagesContainer.appendChild(msgEl);
-                });
-
-                // Auto Scroll to Bottom
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }
-
-            function renderMembers() {
-                if (!state.roomData) return;
-                membersList.innerHTML = '';
-
-                const members = state.roomData.members || [];
-                memberCapacityBadge.textContent = `${members.length}/${state.roomData.capacity}`;
-
-                members.forEach(m => {
-                    const isSelf = m.id === state.currentUserId;
-                    const item = document.createElement('div');
-                    item.className = 'flex items-center justify-between p-2 rounded-xl bg-slate-950/40 border border-slate-800/60';
-                    
-                    const color = getAvatarColor(m.name);
-
-                    item.innerHTML = `
-                        <div class="flex items-center gap-2.5 truncate">
-                            <div class="w-7 h-7 rounded-full ${color} text-white font-bold text-xs flex items-center justify-center shrink-0">
-                                ${escapeHTML(m.name.charAt(0).toUpperCase())}
+                            <div class="px-4 py-2 border-t border-white/5 flex space-x-2 overflow-x-auto">
+                                <button onclick="sendAiPrompt('What secret command opens Kali Linux?')" class="px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 text-[11px] text-gray-300 whitespace-nowrap">🔑 Secret Command?</button>
+                                <button onclick="sendAiPrompt('Tell me a system joke')" class="px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 text-[11px] text-gray-300 whitespace-nowrap">💡 System Joke</button>
                             </div>
-                            <span class="text-xs font-medium text-slate-300 truncate">${escapeHTML(m.name)}</span>
+                            <div class="p-3 border-t border-white/10 bg-neutral-950 flex items-center space-x-2">
+                                <input type="text" id="aiInput" placeholder="Ask AI Assistant..." onkeydown="if(event.key==='Enter') sendAiMessage()" class="flex-1 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500">
+                                <button onclick="sendAiMessage()" class="w-9 h-9 rounded-full bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center text-white"><i class="fa-solid fa-paper-plane text-xs"></i></button>
+                            </div>
                         </div>
-                        ${isSelf ? '<span class="text-[10px] bg-brand-500/20 text-brand-300 px-2 py-0.5 rounded-full font-semibold border border-brand-500/30">You</span>' : ''}
                     `;
 
-                    membersList.appendChild(item);
+                case 'music':
+                    return `
+                        <div class="h-full flex flex-col items-center justify-center p-6 bg-neutral-900 text-center space-y-4">
+                            <div class="w-28 h-28 rounded-full bg-purple-600/20 border-2 border-purple-500/40 flex items-center justify-center animate-pulse">
+                                <i class="fa-solid fa-compact-disc text-5xl text-purple-400"></i>
+                            </div>
+                            <div>
+                                <h3 id="appTrackTitle" class="text-base font-semibold text-white">Synthwave Calm</h3>
+                                <p class="text-xs text-gray-400">Synthesized Ambient Audio Engine</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <button onclick="nextMusicTrack()" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white"><i class="fa-solid fa-backward text-sm"></i></button>
+                                <button onclick="toggleMusicPlay()" class="w-12 h-12 rounded-full bg-purple-600 hover:bg-purple-500 flex items-center justify-center text-white text-lg"><i id="appPlayBtnIcon" class="fa-solid fa-play"></i></button>
+                                <button onclick="nextMusicTrack()" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white"><i class="fa-solid fa-forward text-sm"></i></button>
+                            </div>
+                        </div>
+                    `;
+
+                case 'explorer':
+                    return `
+                        <div class="h-full flex flex-col text-xs text-gray-200">
+                            <div class="p-2 bg-white/5 border-b border-white/10 flex items-center space-x-2">
+                                <i class="fa-solid fa-arrow-left text-gray-400"></i>
+                                <i class="fa-solid fa-arrow-right text-gray-400"></i>
+                                <div class="flex-1 bg-white/5 border border-white/10 rounded px-2 py-1 flex items-center space-x-2">
+                                    <i class="fa-solid fa-desktop text-sky-400"></i>
+                                    <span>C:\\Users\\Administrator\\Documents</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 p-4 grid grid-cols-3 sm:grid-cols-4 gap-4 overflow-y-auto content-start">
+                                <div class="p-3 border border-white/5 rounded-lg flex flex-col items-center hover:bg-white/5 cursor-pointer">
+                                    <i class="fa-solid fa-folder text-3xl text-amber-400 mb-1"></i>
+                                    <span class="text-center">Secrets</span>
+                                </div>
+                                <div class="p-3 border border-white/5 rounded-lg flex flex-col items-center hover:bg-white/5 cursor-pointer">
+                                    <i class="fa-solid fa-file-code text-3xl text-blue-400 mb-1"></i>
+                                    <span class="text-center">hack_payload.sh</span>
+                                </div>
+                                <div class="p-3 border border-white/5 rounded-lg flex flex-col items-center hover:bg-white/5 cursor-pointer">
+                                    <i class="fa-solid fa-image text-3xl text-purple-400 mb-1"></i>
+                                    <span class="text-center">wallpaper.jpg</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                case 'cmd':
+                    return `
+                        <div class="h-full bg-black p-3 font-mono text-xs text-green-400 overflow-y-auto select-text flex flex-col" id="termContainer" onclick="document.getElementById('termInput').focus()">
+                            <div id="termHistory" class="space-y-1">
+                                <div>Windows Subsystem Terminal [Version 10.0.22621]</div>
+                                <div>Type <span class="text-white font-bold">'help'</span> for list of commands.</div>
+                                <div class="text-yellow-300">HACK TIP: Type <span class="text-red-400 font-bold">.os_up.gone_hack</span> to engage Kali protocol!</div>
+                                <br>
+                            </div>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <span class="text-sky-400">user@win-sim:~$</span>
+                                <input type="text" id="termInput" class="flex-1 bg-transparent border-none outline-none text-green-400 font-mono" autofocus>
+                            </div>
+                        </div>
+                    `;
+
+                case 'edge':
+                    return `
+                        <div class="h-full flex flex-col bg-neutral-900 text-xs">
+                            <div class="p-2 bg-white/5 border-b border-white/10 flex items-center space-x-2">
+                                <input type="text" id="browserUrl" value="https://wikipedia.org" class="flex-1 bg-white/5 border border-white/10 rounded px-3 py-1 text-gray-200 focus:outline-none" onkeydown="if(event.key==='Enter') navigateBrowser(this.value)">
+                                <button onclick="navigateBrowser(document.getElementById('browserUrl').value)" class="px-3 py-1 bg-blue-600 rounded text-white font-medium">Go</button>
+                            </div>
+                            <div class="flex-1 bg-white">
+                                <iframe id="browserFrame" src="https://wikipedia.org" class="w-full h-full border-none"></iframe>
+                            </div>
+                        </div>
+                    `;
+
+                case 'paint':
+                    return `
+                        <div class="h-full flex flex-col bg-neutral-900">
+                            <div class="p-2 bg-white/5 border-b border-white/10 flex items-center space-x-4 text-xs text-gray-200">
+                                <div class="flex items-center space-x-1">
+                                    <label>Color:</label>
+                                    <input type="color" id="paintColor" value="#0078d4" class="w-6 h-6 rounded cursor-pointer bg-transparent border-none">
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <label>Size:</label>
+                                    <input type="range" id="paintSize" min="1" max="20" value="4" class="w-20">
+                                </div>
+                                <button onclick="clearCanvas()" class="px-2 py-1 bg-red-600/80 hover:bg-red-600 rounded text-white">Clear</button>
+                            </div>
+                            <div class="flex-1 relative bg-white overflow-hidden" id="canvasHolder">
+                                <canvas id="paintCanvas" class="w-full h-full cursor-crosshair"></canvas>
+                            </div>
+                        </div>
+                    `;
+
+                case 'settings':
+                    return `
+                        <div class="h-full p-4 text-xs text-gray-200 overflow-y-auto space-y-6">
+                            <h2 class="text-base font-semibold text-white">System Settings</h2>
+                            <div class="space-y-2">
+                                <label class="text-xs font-semibold text-gray-400">Desktop Background</label>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400" onclick="changeWallpaper(this.src)" class="rounded border border-white/20 cursor-pointer hover:scale-105 transition h-16 w-full object-cover">
+                                    <img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=400" onclick="changeWallpaper(this.src)" class="rounded border border-white/20 cursor-pointer hover:scale-105 transition h-16 w-full object-cover">
+                                    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=400" onclick="changeWallpaper(this.src)" class="rounded border border-white/20 cursor-pointer hover:scale-105 transition h-16 w-full object-cover">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+            }
+        }
+
+        // AI ASSISTANT CHAT LOGIC
+        function initAiChat() {}
+        function sendAiPrompt(txt) {
+            const input = document.getElementById('aiInput');
+            if (input) {
+                input.value = txt;
+                sendAiMessage();
+            }
+        }
+
+        function sendAiMessage() {
+            const input = document.getElementById('aiInput');
+            const box = document.getElementById('aiChatBox');
+            if (!input || !box || !input.value.trim()) return;
+
+            const userText = input.value.trim();
+            input.value = '';
+
+            const userMsg = document.createElement('div');
+            userMsg.className = "flex items-start justify-end space-x-2";
+            userMsg.innerHTML = `
+                <div class="bg-blue-600 p-3 rounded-2xl rounded-tr-none max-w-[80%] text-white">${userText}</div>
+                <div class="w-7 h-7 rounded-full bg-blue-700 flex items-center justify-center text-white font-bold"><i class="fa-solid fa-user text-xs"></i></div>
+            `;
+            box.appendChild(userMsg);
+            box.scrollTop = box.scrollHeight;
+
+            setTimeout(() => {
+                const aiMsg = document.createElement('div');
+                aiMsg.className = "flex items-start space-x-2";
+                aiMsg.innerHTML = `
+                    <div class="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold"><i class="fa-solid fa-robot text-xs"></i></div>
+                    <div class="bg-white/10 p-3 rounded-2xl rounded-tl-none max-w-[80%] text-gray-200">${getAiReply(userText)}</div>
+                `;
+                box.appendChild(aiMsg);
+                box.scrollTop = box.scrollHeight;
+            }, 600);
+        }
+
+        function getAiReply(text) {
+            const lower = text.toLowerCase();
+            if (lower.includes('secret') || lower.includes('kali') || lower.includes('hack')) {
+                return "Type <span class='text-red-400 font-bold'>.os_up.gone_hack</span> in the Terminal app to boot into Kali Linux Cyber-Suite mode!";
+            }
+            if (lower.includes('joke')) return "Why do programmers prefer dark mode? Because light attracts bugs!";
+            return "I am your system assistant! You can run terminals, listen to music, paint, or test face biometrics on lock screen!";
+        }
+
+        // BROWSER NAV
+        function navigateBrowser(url) {
+            if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+            const iframe = document.getElementById('browserFrame');
+            if (iframe) iframe.src = url;
+        }
+
+        // TERMINAL COMMANDS & HACK PROTOCOL TRIGGER
+        function initTerminal() {
+            const input = document.getElementById('termInput');
+            const history = document.getElementById('termHistory');
+            if (!input) return;
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const cmd = input.value.trim();
+                    input.value = '';
+
+                    const line = document.createElement('div');
+                    line.innerHTML = `<span class="text-sky-400">user@win-sim:~$</span> ${cmd}`;
+                    history.appendChild(line);
+
+                    if (cmd === '.os_up.gone_hack') {
+                        triggerSystemHackSequence();
+                    } else {
+                        executeCommand(cmd, history);
+                    }
+                    
+                    const termContainer = document.getElementById('termContainer');
+                    if (termContainer) termContainer.scrollTop = termContainer.scrollHeight;
+                }
+            });
+        }
+
+        function executeCommand(cmd, history) {
+            const res = document.createElement('div');
+            res.className = "text-gray-300 mb-2";
+
+            switch (cmd.toLowerCase()) {
+                case 'help':
+                    res.innerHTML = `Commands:<br>- <span class="text-yellow-400">help</span>: Show options<br>- <span class="text-yellow-400">ls</span>: List files<br>- <span class="text-yellow-400">clear</span>: Clear prompt<br>- <span class="text-yellow-400">neofetch</span>: Display OS info<br>- <span class="text-red-400 font-bold">.os_up.gone_hack</span>: Hack & Boot Kali OS`;
+                    break;
+                case 'ls':
+                    res.innerHTML = `Projects/ &nbsp;&nbsp; hack_payload.sh &nbsp;&nbsp; wallpaper.jpg`;
+                    break;
+                case 'clear':
+                    history.innerHTML = '';
+                    return;
+                case 'neofetch':
+                    res.innerHTML = `<pre class="text-sky-400 font-mono text-[11px]">
+     /\      OS: Windows 11 Simulator
+    /  \     Kernel: Web WASM
+   / /\ \    Status: Secure Mode
+                    </pre>`;
+                    break;
+                default:
+                    if (cmd !== '') res.innerHTML = `<span class="text-red-400">Command not found: ${cmd}</span>`;
+                    break;
+            }
+            history.appendChild(res);
+        }
+
+        // SECRET HACK SYSTEM TRIGGER (.os_up.gone_hack)
+        function triggerSystemHackSequence() {
+            document.body.classList.add('glitch-active');
+            playHackAlarmSound();
+
+            setTimeout(() => {
+                document.body.classList.remove('glitch-active');
+                desktopEnv.classList.add('hidden');
+                document.getElementById('kaliEnv').classList.remove('hidden');
+                document.getElementById('kaliEnv').classList.add('flex');
+                initKaliOS();
+            }, 1800);
+        }
+
+        function returnToWindowsOS() {
+            document.getElementById('kaliEnv').classList.add('hidden');
+            document.getElementById('kaliEnv').classList.remove('flex');
+            rebootSystem();
+        }
+
+        function playHackAlarmSound() {
+            try {
+                initAudioContext();
+                const osc = audioCtx.createOscillator();
+                const noteGain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 1.5);
+                noteGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                noteGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+                osc.connect(noteGain);
+                noteGain.connect(gainNode);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 1.5);
+            } catch(e) {}
+        }
+
+        // KALI LINUX ENVIRONMENT ENGINE (3D GLOBE, MATRIX RAIN, KALI SHELL)
+        let earthScene, earthCamera, earthRenderer, earthGlobe;
+        let matrixInterval;
+
+        function initKaliOS() {
+            init3DEarth();
+            initMatrixRain();
+            initKaliTerminal();
+        }
+
+        // 3D Earth Globe Model Animation (Three.js)
+        function init3DEarth() {
+            const container = document.getElementById('earthContainer');
+            if (!container || container.children.length > 0) return;
+
+            // Helper for 2D Fallback Render
+            function render2DFallback() {
+                container.innerHTML = `
+                    <div class="w-full h-full flex flex-col items-center justify-center text-center p-4 bg-emerald-950/20 border border-emerald-500/30 rounded-lg">
+                        <div class="w-24 h-24 rounded-full border-2 border-dashed border-emerald-400 animate-spin flex items-center justify-center mb-3">
+                            <i class="fa-solid fa-globe text-4xl text-emerald-400"></i>
+                        </div>
+                        <span class="text-xs text-emerald-400 font-mono font-bold tracking-wider">2D CYBER MATRIX GLOBE</span>
+                        <span class="text-[10px] text-gray-400 font-mono mt-1">WebGL Context Standard Active</span>
+                    </div>
+                `;
+            }
+
+            try {
+                // Check if WebGL canvas creation is supported before instantiation
+                const testCanvas = document.createElement('canvas');
+                const gl = testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl');
+                if (!gl) {
+                    render2DFallback();
+                    return;
+                }
+
+                earthScene = new THREE.Scene();
+                earthCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+                earthCamera.position.z = 2.4;
+
+                earthRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, failIfMajorPerformanceCaveat: false });
+                earthRenderer.setSize(container.clientWidth, container.clientHeight);
+                container.appendChild(earthRenderer.domElement);
+
+                // Wireframe Cyber Globe
+                const geometry = new THREE.SphereGeometry(0.9, 28, 28);
+                const material = new THREE.MeshBasicMaterial({
+                    color: 0x00ff66,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.45
                 });
+                earthGlobe = new THREE.Mesh(geometry, material);
+                earthScene.add(earthGlobe);
+
+                // Outer Threat Ring
+                const ringGeo = new THREE.RingGeometry(1.1, 1.15, 32);
+                const ringMat = new THREE.MeshBasicMaterial({ color: 0xff2a2a, side: THREE.DoubleSide, wireframe: true });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = Math.PI / 3;
+                earthScene.add(ring);
+
+                function animateEarth() {
+                    if (document.getElementById('kaliEnv').classList.contains('hidden')) return;
+                    requestAnimationFrame(animateEarth);
+                    earthGlobe.rotation.y += 0.005;
+                    ring.rotation.z += 0.008;
+                    earthRenderer.render(earthScene, earthCamera);
+                }
+                animateEarth();
+            } catch (e) {
+                console.warn("WebGL not supported or context creation failed. Falling back to 2D canvas preview.", e);
+                render2DFallback();
             }
+        }
 
-            // Send Message Event
-            formSendMessage.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const text = chatInput.value.trim();
-                if (!text) return;
+        // Matrix Digital Rain Canvas
+        function initMatrixRain() {
+            const canvas = document.getElementById('matrixCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
 
-                sendMessage(text);
-                chatInput.value = '';
-                emojiDrawer.classList.add('hidden');
-            });
+            const chars = "01100101KALI_BREACH_ROOT_NET_SYS_CRACK";
+            const fontSize = 12;
+            const columns = Math.floor(canvas.width / fontSize);
+            const drops = Array(columns).fill(1);
 
-            function sendMessage(text, mediaUrl = null) {
-                if (!state.roomCode) return;
+            if (matrixInterval) clearInterval(matrixInterval);
+            matrixInterval = setInterval(() => {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#00ff66";
+                ctx.font = `${fontSize}px monospace`;
 
-                const rooms = getStoredRooms();
-                const room = rooms[state.roomCode];
+                drops.forEach((y, i) => {
+                    const text = chars[Math.floor(Math.random() * chars.length)];
+                    ctx.fillText(text, i * fontSize, y * fontSize);
+                    if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                    drops[i]++;
+                });
+            }, 35);
+        }
 
-                if (!room) return;
+        // Password Brute Force Simulator
+        function startBruteForce() {
+            const bar = document.getElementById('bruteBar');
+            const status = document.getElementById('bruteStatus');
+            const attempt = document.getElementById('bruteAttempt');
+            let progress = 0;
 
-                const newMsg = {
-                    id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-                    type: 'user',
-                    userId: state.currentUserId,
-                    sender: state.username,
-                    text: text,
-                    mediaUrl: mediaUrl,
-                    timestamp: Date.now()
-                };
+            const interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 8) + 2;
+                if (progress > 100) progress = 100;
+                bar.style.width = `${progress}%`;
+                attempt.textContent = `0x${Math.random().toString(16).substring(2, 8)}...`;
+                status.textContent = `Testing Dictionary Passwords... ${progress}%`;
 
-                room.messages.push(newMsg);
-                rooms[state.roomCode] = room;
-                saveRooms(rooms);
-                state.roomData = room;
-
-                renderMessages();
-                broadcastEvent('NEW_MESSAGE', newMsg);
-            }
-
-            // =========================================================================
-            // EMOJI & MEDIA ACTIONS
-            // =========================================================================
-            btnToggleEmoji.addEventListener('click', (e) => {
-                e.stopPropagation();
-                emojiDrawer.classList.toggle('hidden');
-            });
-
-            btnCloseEmoji.addEventListener('click', () => {
-                emojiDrawer.classList.add('hidden');
-            });
-
-            // Click outside to close emoji drawer
-            document.addEventListener('click', (e) => {
-                if (!emojiDrawer.contains(e.target) && e.target !== btnToggleEmoji) {
-                    emojiDrawer.classList.add('hidden');
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    status.textContent = "DECRYPT SUCCESS: 'root_pass_2026'";
+                    status.className = "text-[10px] text-kaliGreen font-bold mt-1";
                 }
-            });
+            }, 100);
+        }
 
-            // Emoji Selection
-            emojiGrid.addEventListener('click', (e) => {
-                if (e.target.classList.contains('emoji-btn')) {
-                    const emoji = e.target.textContent;
-                    chatInput.value += emoji;
-                    chatInput.focus();
-                }
-            });
+        // Kali Terminal logic & Return trigger (.os_upreturn)
+        function initKaliTerminal() {
+            const input = document.getElementById('kaliTermInput');
+            const log = document.getElementById('kaliTermLog');
+            if (!input) return;
 
-            // Quick Reaction Attachment Mock
-            btnSendImage.addEventListener('click', () => {
-                const sampleGifs = [
-                    'https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&auto=format&fit=crop&q=60',
-                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=60',
-                    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=500&auto=format&fit=crop&q=60'
-                ];
-                const randomImg = sampleGifs[Math.floor(Math.random() * sampleGifs.length)];
-                sendMessage('Shared a reaction card 📸', randomImg);
-            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const cmd = input.value.trim();
+                    input.value = '';
 
-            // =========================================================================
-            // AUXILIARY UTILITIES
-            // =========================================================================
-            // Copy Code to Clipboard
-            btnCopyCode.addEventListener('click', () => {
-                const code = state.roomCode;
-                if (!code) return;
+                    const line = document.createElement('div');
+                    line.innerHTML = `<span class="text-kaliRed">root@kali:~#</span> ${cmd}`;
+                    log.appendChild(line);
 
-                // Fallback copy execution for iframe safety
-                const tempInput = document.createElement('textarea');
-                tempInput.value = code;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                try {
-                    document.execCommand('copy');
-                    showToast('Room code copied to clipboard!', 'success');
-                } catch (err) {
-                    showToast('Failed to copy code', 'error');
-                }
-                document.body.removeChild(tempInput);
-            });
-
-            // Share Invite Link
-            btnShareLink.addEventListener('click', () => {
-                showToast(`Share Code: ${state.roomCode} with your friends!`, 'info');
-            });
-
-            // Clear Chat Messages locally
-            btnClearChat.addEventListener('click', () => {
-                if (!state.roomCode) return;
-                const rooms = getStoredRooms();
-                if (rooms[state.roomCode]) {
-                    rooms[state.roomCode].messages = [
-                        {
-                            id: 'msg_sys_cleared_' + Date.now(),
-                            type: 'system',
-                            text: `${state.username} cleared the chat history.`,
-                            timestamp: Date.now()
-                        }
-                    ];
-                    saveRooms(rooms);
-                    state.roomData = rooms[state.roomCode];
-                    renderMessages();
-                    broadcastEvent('CHAT_CLEARED');
-                    showToast('Chat history cleared.', 'info');
-                }
-            });
-
-            // Leave Room
-            btnLeaveRoom.addEventListener('click', () => {
-                if (!state.roomCode) return;
-
-                const rooms = getStoredRooms();
-                const room = rooms[state.roomCode];
-
-                if (room) {
-                    // Remove current user from members
-                    room.members = room.members.filter(m => m.id !== state.currentUserId);
-                    room.messages.push({
-                        id: 'msg_sys_leave_' + Date.now(),
-                        type: 'system',
-                        text: `${state.username} left the room.`,
-                        timestamp: Date.now()
-                    });
-
-                    saveRooms(rooms);
-                    broadcastEvent('USER_LEFT', { username: state.username });
-                }
-
-                // Cleanup session & channel
-                if (state.channel) {
-                    state.channel.close();
-                    state.channel = null;
-                }
-                localStorage.removeItem(STORAGE_KEY_SESSION);
-
-                state.roomCode = null;
-                state.roomData = null;
-
-                // Switch back to Main Screen
-                screenChat.classList.add('hidden');
-                screenMain.classList.remove('hidden');
-                updateHomeScreenStats();
-                showToast('Left the room.', 'info');
-            });
-
-            // Toggle Mobile Sidebar
-            btnToggleSidebar.addEventListener('click', () => {
-                sidebarMembers.classList.toggle('translate-x-full');
-            });
-
-            // Consistent Avatar Color Generator
-            function getAvatarColor(name) {
-                const colors = [
-                    'bg-indigo-600', 'bg-purple-600', 'bg-pink-600',
-                    'bg-emerald-600', 'bg-amber-600', 'bg-cyan-600', 'bg-rose-600'
-                ];
-                let hash = 0;
-                for (let i = 0; i < name.length; i++) {
-                    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                return colors[Math.abs(hash) % colors.length];
-            }
-
-            // Real-time synchronization across local storage events
-            window.addEventListener('storage', (e) => {
-                if (e.key === STORAGE_KEY_ROOMS && state.roomCode) {
-                    const rooms = getStoredRooms();
-                    if (rooms[state.roomCode]) {
-                        state.roomData = rooms[state.roomCode];
-                        renderMessages();
-                        renderMembers();
+                    if (cmd === '.os_upreturn') {
+                        returnToWindowsOS();
+                    } else if (cmd === 'help') {
+                        const res = document.createElement('div');
+                        res.className = "text-gray-300";
+                        res.innerHTML = `Kali Commands:<br>- <span class="text-kaliGreen">.os_upreturn</span> : Return to Windows OS<br>- <span class="text-kaliGreen">nmap</span> : Scan ports<br>- <span class="text-kaliGreen">clear</span> : Clear screen`;
+                        log.appendChild(res);
+                    } else if (cmd === 'nmap') {
+                        const res = document.createElement('div');
+                        res.className = "text-emerald-400";
+                        res.innerHTML = `PORT 80/TCP OPEN (HTTP)<br>PORT 443/TCP OPEN (HTTPS)<br>PORT 22/TCP OPEN (SSH)`;
+                        log.appendChild(res);
+                    } else if (cmd === 'clear') {
+                        log.innerHTML = '';
+                    } else {
+                        const res = document.createElement('div');
+                        res.className = "text-red-400";
+                        res.innerHTML = `Command not recognized. Type '.os_upreturn' to return to Windows.`;
+                        log.appendChild(res);
                     }
+                    log.scrollTop = log.scrollHeight;
                 }
             });
+        }
 
-            // Auto Reconnect Session on Page Refresh
-            function initSession() {
-                updateHomeScreenStats();
-                try {
-                    const savedSession = localStorage.getItem(STORAGE_KEY_SESSION);
-                    if (savedSession) {
-                        const { roomCode, username } = JSON.parse(savedSession);
-                        const rooms = getStoredRooms();
-                        if (rooms[roomCode]) {
-                            joinLobby(roomCode, username);
-                        } else {
-                            localStorage.removeItem(STORAGE_KEY_SESSION);
-                        }
-                    }
-                } catch (e) {
-                    console.error('Session restoration failed', e);
-                }
+        // PAINT CANVAS
+        let drawing = false;
+        function initPaintCanvas() {
+            const canvas = document.getElementById('paintCanvas');
+            const holder = document.getElementById('canvasHolder');
+            if (!canvas || !holder) return;
+
+            canvas.width = holder.clientWidth;
+            canvas.height = holder.clientHeight;
+
+            const ctx = canvas.getContext('2d');
+            const colorInput = document.getElementById('paintColor');
+            const sizeInput = document.getElementById('paintSize');
+
+            function startDraw(e) { drawing = true; draw(e); }
+            function stopDraw() { drawing = false; ctx.beginPath(); }
+            function draw(e) {
+                if (!drawing) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+                const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+
+                ctx.lineWidth = sizeInput.value;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = colorInput.value;
+
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y);
             }
 
-            // Run Init
-            initSession();
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('touchstart', startDraw);
+            canvas.addEventListener('touchend', stopDraw);
+            canvas.addEventListener('touchmove', draw);
+        }
 
-        })();
+        function clearCanvas() {
+            const canvas = document.getElementById('paintCanvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        function changeWallpaper(src) {
+            desktopEnv.style.backgroundImage = `url('${src}')`;
+            lockScreen.style.backgroundImage = `url('${src}')`;
+        }
     </script>
 </body>
 </html>
