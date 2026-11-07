@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusChat - Real-Time Multi-User Room</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 3s infinite alternate',
+                        'float': 'float 4s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 15px rgba(99, 102, 241, 0.2)' },
+                            '100%': { boxShadow: '0 0 35px rgba(99, 102, 241, 0.6)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-8px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.8);
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="h-full font-sans text-slate-100 bg-slate-950 flex flex-col justify-between overflow-hidden selection:bg-brand-500 selection:text-white">
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="app" class="relative w-full h-full flex flex-col">
+
+        <!-- ========================================== -->
+        <!-- SCREEN 1: MAIN MENU / LANDING              -->
+        <!-- ========================================== -->
+        <section id="screen-mainmenu" class="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 relative z-10 overflow-y-auto">
+            <!-- Background Decorative Orbs -->
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-600/20 rounded-full blur-3xl pointer-events-none animate-pulse-glow"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none animate-pulse-glow" style="animation-delay: 1.5s;"></div>
+
+            <div class="max-w-md w-full glass-panel p-8 rounded-3xl shadow-2xl relative z-20 text-center border border-white/10 my-auto">
+                <!-- App Logo -->
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-400 text-white shadow-lg shadow-brand-500/30 mb-6 animate-float">
+                    <i class="fa-solid fa-comments text-3xl"></i>
+                </div>
+                
+                <h1 class="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-brand-300">
+                    NexusChat
+                </h1>
+                <p class="text-slate-400 text-sm mt-2 mb-8">
+                    Instant, real-time encrypted multi-user chat rooms directly inside your browser. No registration required.
+                </p>
+
+                <!-- Menu Buttons -->
+                <div class="flex flex-col gap-4">
+                    <button id="btn-open-create-modal" class="w-full py-4 px-6 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-brand-600/30 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-plus-circle text-lg"></i>
+                        <span>Create New Room</span>
+                    </button>
+
+                    <button id="btn-open-join-modal" class="w-full py-4 px-6 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:text-white font-semibold rounded-xl border border-slate-700/60 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-right-to-bracket text-lg text-brand-400"></i>
+                        <span>Join Existing Room</span>
+                    </button>
+                </div>
+
+                <!-- Footer Status -->
+                <div class="mt-8 pt-6 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                    <span class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Sync Ready
+                    </span>
+                    <span id="active-rooms-count">0 Rooms Saved</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- MODAL: CREATE ROOM                         -->
+        <!-- ========================================== -->
+        <div id="modal-create" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
+            <div class="glass-panel w-full max-w-lg rounded-2xl border border-slate-700 shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300">
+                <!-- Desktop Retro Header Titlebar -->
+                <div class="bg-slate-900/90 px-5 py-3 border-b border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+                        <span class="ml-2 text-xs font-mono font-semibold text-slate-400 uppercase tracking-wider">Create_Room_Config.exe</span>
+                    </div>
+                    <button class="btn-close-modal text-slate-400 hover:text-white transition-colors">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <form id="form-create-room" class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Your Display Name *</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-slate-500"></i>
+                            <input type="text" id="create-username" required maxlength="20" placeholder="e.g. Alex" class="w-full pl-10 pr-4 py-2.5 bg-slate-900/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Room Name *</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-square-poll-h absolute left-3.5 top-3.5 text-slate-500"></i>
+                            <input type="text" id="create-roomname" required maxlength="30" placeholder="e.g. Gaming Lounge, Dev Talk" class="w-full pl-10 pr-4 py-2.5 bg-slate-900/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Password (Optional)</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-500"></i>
+                                <input type="password" id="create-password" placeholder="Leave empty for public" class="w-full pl-10 pr-4 py-2.5 bg-slate-900/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Max Capacity</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-users absolute left-3.5 top-3.5 text-slate-500"></i>
+                                <select id="create-capacity" class="w-full pl-10 pr-4 py-2.5 bg-slate-900/70 border border-slate-700/80 rounded-xl text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm appearance-none">
+                                    <option value="2">2 Members (1-on-1)</option>
+                                    <option value="5" selected>5 Members (Small Team)</option>
+                                    <option value="10">10 Members (Squad)</option>
+                                    <option value="25">25 Members (Community)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
+                        <button type="button" class="btn-close-modal px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all">Cancel</button>
+                        <button type="submit" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-brand-600/30 transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-rocket"></i> Launch Room
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MODAL: JOIN ROOM                           -->
+        <!-- ========================================== -->
+        <div id="modal-join" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
+            <div class="glass-panel w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300">
+                <div class="bg-slate-900/90 px-5 py-3 border-b border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+                        <span class="ml-2 text-xs font-mono font-semibold text-slate-400 uppercase tracking-wider">Join_Room_Terminal.exe</span>
+                    </div>
+                    <button class="btn-close-modal text-slate-400 hover:text-white transition-colors">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <form id="form-join-room" class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Your Display Name *</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-slate-500"></i>
+                            <input type="text" id="join-username" required maxlength="20" placeholder="e.g. Jordan" class="w-full pl-10 pr-4 py-2.5 bg-slate-900/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">6-Digit Room Code *</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-hashtag absolute left-3.5 top-3.5 text-slate-500"></i>
+                            <input type="text" id="join-roomcode" required maxlength="6" placeholder="e.g. X7K9A2" class="w-full pl-10 pr-4 py-2.5 uppercase font-mono tracking-widest bg-slate-900/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Room Password (If required)</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-key absolute left-3.5 top-3.5 text-slate-500"></i>
+                            <input type="password" id="join-password" placeholder="Enter password if protected" class="w-full pl-10 pr-4 py-2.5 bg-slate-900/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm">
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
+                        <button type="button" class="btn-close-modal px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all">Cancel</button>
+                        <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-right-to-bracket"></i> Connect
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- SCREEN 2: CHAT LOBBY                      -->
+        <!-- ========================================== -->
+        <section id="screen-chat" class="flex-1 flex flex-col h-full hidden overflow-hidden relative">
+
+            <!-- LOBBY HEADER BAR -->
+            <header class="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 z-20">
+                <div class="flex items-center gap-3">
+                    <button id="btn-toggle-sidebar" class="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">
+                        <i class="fa-solid fa-users text-lg"></i>
+                    </button>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 id="display-room-name" class="font-bold text-white text-base sm:text-lg truncate max-w-[150px] sm:max-w-xs">Room Name</h2>
+                            <span id="display-lock-icon" class="text-xs text-amber-400 hidden"><i class="fa-solid fa-lock"></i></span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-slate-400">
+                            <span>Code:</span>
+                            <button id="btn-copy-code" class="font-mono bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded border border-slate-700 text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1 group" title="Click to Copy Code">
+                                <span id="display-room-code">XXXXXX</span>
+                                <i class="fa-regular fa-copy text-[10px] group-hover:scale-110 transition-transform"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="btn-share-link" class="hidden sm:flex px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-medium border border-slate-700 items-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-share-nodes text-brand-400"></i>
+                        <span>Invite</span>
+                    </button>
+                    <button id="btn-clear-chat" class="p-2 sm:px-3 sm:py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-rose-400 rounded-lg text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-all" title="Clear Local Messages">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span class="hidden sm:inline">Clear</span>
+                    </button>
+                    <button id="btn-leave-room" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <span>Leave</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- LOBBY MAIN CONTENT (CHAT & SIDEBAR) -->
+            <div class="flex-1 flex overflow-hidden relative">
+
+                <!-- MAIN CHAT FEED AREA -->
+                <div class="flex-1 flex flex-col justify-between overflow-hidden bg-slate-950/60 relative">
+                    
+                    <!-- MESSAGES LIST CONTAINER -->
+                    <div id="messages-container" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                        <!-- Messages dynamically injected here -->
+                    </div>
+
+                    <!-- EMOJI PICKER DRAWER -->
+                    <div id="emoji-drawer" class="hidden absolute bottom-20 left-4 z-30 w-72 sm:w-80 glass-panel rounded-2xl border border-slate-700 p-3 shadow-2xl transition-all">
+                        <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            <span>Quick Reactions</span>
+                            <button id="btn-close-emoji" class="hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="grid grid-cols-6 gap-2 max-h-48 overflow-y-auto p-1" id="emoji-grid">
+                            <!-- Popular Emojis -->
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">👍</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">❤️</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">😂</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">🔥</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">🎉</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">🚀</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">😍</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">😮</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">😢</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">🙏</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">👏</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">💯</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">😎</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">🤔</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">💀</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">✨</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">👀</button>
+                            <button class="emoji-btn text-xl hover:bg-slate-800 p-1.5 rounded-lg transition-transform hover:scale-125">🙌</button>
+                        </div>
+                    </div>
+
+                    <!-- BOTTOM INPUT DOCK -->
+                    <div class="p-3 sm:p-4 bg-slate-900/90 border-t border-slate-800 shrink-0">
+                        <form id="form-send-message" class="flex items-center gap-2">
+                            <!-- Emoji Toggle Button -->
+                            <button type="button" id="btn-toggle-emoji" class="p-2.5 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition-colors shrink-0">
+                                <i class="fa-solid fa-face-smile text-xl"></i>
+                            </button>
+
+                            <!-- Quick Image Placeholder Trigger -->
+                            <button type="button" id="btn-send-image" class="p-2.5 text-slate-400 hover:text-brand-400 hover:bg-slate-800 rounded-xl transition-colors shrink-0 hidden sm:block" title="Send Quick Reaction Card">
+                                <i class="fa-solid fa-image text-lg"></i>
+                            </button>
+
+                            <!-- Message Input Field -->
+                            <div class="flex-1 relative">
+                                <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off" class="w-full py-3 px-4 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm transition-all">
+                            </div>
+
+                            <!-- Send Button -->
+                            <button type="submit" id="btn-send" class="py-3 px-5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl shadow-lg shadow-brand-600/30 transition-all flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-paper-plane text-sm"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- SIDEBAR MEMBERS DRAWER -->
+                <aside id="sidebar-members" class="absolute md:relative right-0 top-0 bottom-0 w-64 bg-slate-900/95 border-l border-slate-800 flex flex-col z-20 transition-transform duration-300 translate-x-full md:translate-x-0">
+                    <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-users text-brand-400 text-sm"></i>
+                            <h3 class="font-bold text-sm text-white">Active Members</h3>
+                        </div>
+                        <span id="member-capacity-badge" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-brand-400 border border-slate-700">0/0</span>
+                    </div>
+
+                    <div id="members-list" class="flex-1 overflow-y-auto p-3 space-y-2">
+                        <!-- Dynamic member list rendered here -->
+                    </div>
+
+                    <!-- Sidebar Footer Info -->
+                    <div class="p-3 bg-slate-950/60 border-t border-slate-800 text-center">
+                        <p class="text-[11px] text-slate-400">
+                            <i class="fa-solid fa-bolt text-amber-400 mr-1"></i> Live Broadcast active across tabs
+                        </p>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- MAIN JAVASCRIPT APP LOGIC -->
+    <script>
+        (function() {
+            // =========================================================================
+            // STATE MANAGEMENT & STORAGE HELPER
+            // =========================================================================
+            const STORAGE_KEY_ROOMS = 'nexus_chat_rooms_db';
+            const STORAGE_KEY_SESSION = 'nexus_chat_current_session';
+
+            let state = {
+                currentUserId: getOrCreateUserId(),
+                username: '',
+                roomCode: null,
+                roomData: null,
+                messages: [],
+                channel: null
+            };
+
+            function getOrCreateUserId() {
+                let id = localStorage.getItem('nexus_user_id');
+                if (!id) {
+                    id = 'usr_' + Math.random().toString(36).substring(2, 9);
+                    localStorage.setItem('nexus_user_id', id);
+                }
+                return id;
+            }
+
+            // Retrieve all rooms from LocalStorage database
+            function getStoredRooms() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY_ROOMS);
+                    return raw ? JSON.parse(raw) : {};
+                } catch (e) {
+                    console.error('Error loading rooms', e);
+                    return {};
+                }
+            }
+
+            // Save all rooms database back to LocalStorage
+            function saveRooms(rooms) {
+                try {
+                    localStorage.setItem(STORAGE_KEY_ROOMS, JSON.stringify(rooms));
+                    // Notify other tabs via StorageEvent fallback if needed
+                    window.dispatchEvent(new Event('storage'));
+                } catch (e) {
+                    console.error('Error saving rooms', e);
+                }
+            }
+
+            // =========================================================================
+            // DOM ELEMENTS REF
+            // =========================================================================
+            const screenMain = document.getElementById('screen-mainmenu');
+            const screenChat = document.getElementById('screen-chat');
+
+            const modalCreate = document.getElementById('modal-create');
+            const modalJoin = document.getElementById('modal-join');
+
+            const btnOpenCreate = document.getElementById('btn-open-create-modal');
+            const btnOpenJoin = document.getElementById('btn-open-join-modal');
+            const btnsCloseModal = document.querySelectorAll('.btn-close-modal');
+
+            const formCreate = document.getElementById('form-create-room');
+            const formJoin = document.getElementById('form-join-room');
+
+            const displayRoomName = document.getElementById('display-room-name');
+            const displayRoomCode = document.getElementById('display-room-code');
+            const displayLockIcon = document.getElementById('display-lock-icon');
+            const btnCopyCode = document.getElementById('btn-copy-code');
+            const btnLeaveRoom = document.getElementById('btn-leave-room');
+            const btnClearChat = document.getElementById('btn-clear-chat');
+            const btnShareLink = document.getElementById('btn-share-link');
+
+            const messagesContainer = document.getElementById('messages-container');
+            const formSendMessage = document.getElementById('form-send-message');
+            const chatInput = document.getElementById('chat-input');
+            
+            const btnToggleEmoji = document.getElementById('btn-toggle-emoji');
+            const emojiDrawer = document.getElementById('emoji-drawer');
+            const btnCloseEmoji = document.getElementById('btn-close-emoji');
+            const emojiGrid = document.getElementById('emoji-grid');
+            const btnSendImage = document.getElementById('btn-send-image');
+
+            const sidebarMembers = document.getElementById('sidebar-members');
+            const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+            const membersList = document.getElementById('members-list');
+            const memberCapacityBadge = document.getElementById('member-capacity-badge');
+            const activeRoomsCountEl = document.getElementById('active-rooms-count');
+
+            // =========================================================================
+            // TOAST NOTIFICATIONS SYSTEM
+            // =========================================================================
+            function showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `p-3 px-4 rounded-xl shadow-lg border text-xs font-semibold flex items-center gap-2 transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto ${
+                    type === 'error' ? 'bg-rose-950/90 border-rose-800 text-rose-200' :
+                    type === 'success' ? 'bg-emerald-950/90 border-emerald-800 text-emerald-200' :
+                    'bg-slate-900/90 border-slate-700 text-slate-200'
+                }`;
+
+                const icon = type === 'error' ? 'fa-circle-exclamation text-rose-400' :
+                             type === 'success' ? 'fa-circle-check text-emerald-400' :
+                             'fa-circle-info text-brand-400';
+
+                toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHTML(message)}</span>`;
+                container.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.classList.remove('translate-y-2', 'opacity-0');
+                }, 10);
+
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3500);
+            }
+
+            function escapeHTML(str) {
+                return str.replace(/[&<>'"]/g, 
+                    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+                );
+            }
+
+            // =========================================================================
+            // MODAL CONTROLS
+            // =========================================================================
+            function openModal(modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modal.querySelector('.transform').classList.remove('scale-95');
+                }, 10);
+            }
+
+            function closeModal(modal) {
+                modal.classList.add('opacity-0');
+                modal.querySelector('.transform').classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+
+            btnOpenCreate.addEventListener('click', () => openModal(modalCreate));
+            btnOpenJoin.addEventListener('click', () => openModal(modalJoin));
+
+            btnsCloseModal.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    closeModal(modalCreate);
+                    closeModal(modalJoin);
+                });
+            });
+
+            // Update stats on home screen
+            function updateHomeScreenStats() {
+                const rooms = getStoredRooms();
+                const count = Object.keys(rooms).length;
+                activeRoomsCountEl.textContent = `${count} Active Room${count === 1 ? '' : 's'}`;
+            }
+
+            // =========================================================================
+            // ROOM GENERATION & JOINING LOGIC
+            // =========================================================================
+            function generateRoomCode() {
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluded confusing chars (I, O, 1, 0)
+                let code = '';
+                for (let i = 0; i < 6; i++) {
+                    code += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return code;
+            }
+
+            // Form Submit: CREATE ROOM
+            formCreate.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = document.getElementById('create-username').value.trim();
+                const roomName = document.getElementById('create-roomname').value.trim();
+                const password = document.getElementById('create-password').value.trim();
+                const capacity = parseInt(document.getElementById('create-capacity').value, 10);
+
+                if (!username || !roomName) return;
+
+                const roomCode = generateRoomCode();
+                const rooms = getStoredRooms();
+
+                const newRoom = {
+                    code: roomCode,
+                    name: roomName,
+                    password: password || null,
+                    capacity: capacity,
+                    members: [{ id: state.currentUserId, name: username, joinedAt: Date.now() }],
+                    messages: [
+                        {
+                            id: 'msg_init_' + Date.now(),
+                            type: 'system',
+                            text: `Room "${roomName}" created by ${username}. Room Code: ${roomCode}`,
+                            timestamp: Date.now()
+                        }
+                    ]
+                };
+
+                rooms[roomCode] = newRoom;
+                saveRooms(rooms);
+
+                closeModal(modalCreate);
+                joinLobby(roomCode, username);
+                showToast(`Room created! Code: ${roomCode}`, 'success');
+            });
+
+            // Form Submit: JOIN ROOM
+            formJoin.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = document.getElementById('join-username').value.trim();
+                const roomCode = document.getElementById('join-roomcode').value.trim().toUpperCase();
+                const password = document.getElementById('join-password').value.trim();
+
+                const rooms = getStoredRooms();
+                const room = rooms[roomCode];
+
+                if (!room) {
+                    showToast('Invalid Room Code. Room does not exist.', 'error');
+                    return;
+                }
+
+                if (room.password && room.password !== password) {
+                    showToast('Incorrect password for protected room.', 'error');
+                    return;
+                }
+
+                // Check capacity (excluding already registered current user ID)
+                const existingMemberIndex = room.members.findIndex(m => m.id === state.currentUserId);
+                if (existingMemberIndex === -1 && room.members.length >= room.capacity) {
+                    showToast('Room is already full at max capacity!', 'error');
+                    return;
+                }
+
+                closeModal(modalJoin);
+                joinLobby(roomCode, username);
+            });
+
+            // =========================================================================
+            // LOBBY INITIALIZATION & SYNC
+            // =========================================================================
+            function joinLobby(roomCode, username) {
+                state.username = username;
+                state.roomCode = roomCode;
+
+                // Load Room Data
+                const rooms = getStoredRooms();
+                const room = rooms[roomCode];
+
+                if (!room) {
+                    showToast('Failed to enter room. Data corrupted.', 'error');
+                    return;
+                }
+
+                state.roomData = room;
+
+                // Add member if not already added
+                let member = room.members.find(m => m.id === state.currentUserId);
+                if (!member) {
+                    member = { id: state.currentUserId, name: username, joinedAt: Date.now() };
+                    room.members.push(member);
+
+                    // Add system message for join
+                    room.messages.push({
+                        id: 'msg_sys_' + Date.now(),
+                        type: 'system',
+                        text: `${username} joined the room.`,
+                        timestamp: Date.now()
+                    });
+
+                    saveRooms(rooms);
+                } else {
+                    // Update display name if changed
+                    member.name = username;
+                    saveRooms(rooms);
+                }
+
+                // Setup BroadcastChannel for Instant Cross-Tab Realtime Messaging
+                setupBroadcastChannel(roomCode);
+
+                // Save session in local storage for refresh recovery
+                localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({
+                    roomCode: roomCode,
+                    username: username
+                }));
+
+                // Switch UI Screens
+                screenMain.classList.add('hidden');
+                screenChat.classList.remove('hidden');
+
+                // Update Room Header
+                displayRoomName.textContent = room.name;
+                displayRoomCode.textContent = room.code;
+                if (room.password) {
+                    displayLockIcon.classList.remove('hidden');
+                } else {
+                    displayLockIcon.classList.add('hidden');
+                }
+
+                // Render Active Content
+                renderMembers();
+                renderMessages();
+
+                // Notify other tabs via channel
+                broadcastEvent('USER_JOINED', { username, id: state.currentUserId });
+            }
+
+            // Setup Real-time Inter-Tab Communication
+            function setupBroadcastChannel(code) {
+                if (state.channel) {
+                    state.channel.close();
+                }
+
+                state.channel = new BroadcastChannel(`nexus_room_${code}`);
+                state.channel.onmessage = (event) => {
+                    const { type, payload } = event.data;
+
+                    if (type === 'NEW_MESSAGE' || type === 'USER_JOINED' || type === 'USER_LEFT' || type === 'CHAT_CLEARED') {
+                        // Reload state from local storage to keep sync
+                        const rooms = getStoredRooms();
+                        if (rooms[code]) {
+                            state.roomData = rooms[code];
+                            renderMessages();
+                            renderMembers();
+                        }
+                    }
+                };
+            }
+
+            function broadcastEvent(type, payload = {}) {
+                if (state.channel) {
+                    state.channel.postMessage({ type, payload });
+                }
+            }
+
+            // =========================================================================
+            // MESSAGING & RENDERING
+            // =========================================================================
+            function renderMessages() {
+                if (!state.roomData) return;
+                messagesContainer.innerHTML = '';
+
+                const messages = state.roomData.messages || [];
+
+                messages.forEach(msg => {
+                    const msgEl = document.createElement('div');
+
+                    if (msg.type === 'system') {
+                        // System pill message
+                        msgEl.className = 'flex justify-center my-2';
+                        msgEl.innerHTML = `
+                            <span class="px-3 py-1 rounded-full bg-slate-900/80 border border-slate-800 text-slate-400 text-xs flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-circle-info text-[10px] text-brand-400"></i>
+                                ${escapeHTML(msg.text)}
+                            </span>
+                        `;
+                    } else {
+                        // User message
+                        const isSelf = msg.userId === state.currentUserId;
+                        const formattedTime = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                        msgEl.className = `flex flex-col ${isSelf ? 'items-end' : 'items-start'} my-2`;
+
+                        // Generate deterministic avatar color based on name
+                        const avatarBg = getAvatarColor(msg.sender);
+
+                        msgEl.innerHTML = `
+                            <div class="flex items-end gap-2 max-w-[85%] sm:max-w-[70%] ${isSelf ? 'flex-row-reverse' : 'flex-row'}">
+                                <!-- Avatar -->
+                                <div class="w-8 h-8 rounded-full ${avatarBg} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-md">
+                                    ${escapeHTML(msg.sender.charAt(0).toUpperCase())}
+                                </div>
+
+                                <!-- Message Bubble -->
+                                <div class="flex flex-col ${isSelf ? 'items-end' : 'items-start'}">
+                                    <div class="flex items-center gap-2 mb-1 px-1">
+                                        <span class="text-xs font-semibold text-slate-400">${escapeHTML(msg.sender)}</span>
+                                        <span class="text-[10px] text-slate-500">${formattedTime}</span>
+                                    </div>
+                                    <div class="${
+                                        isSelf 
+                                        ? 'bg-brand-600 text-white rounded-2xl rounded-tr-none px-4 py-2.5 shadow-md' 
+                                        : 'bg-slate-800 text-slate-100 border border-slate-700/80 rounded-2xl rounded-tl-none px-4 py-2.5 shadow-md'
+                                    } break-words text-sm leading-relaxed">
+                                        ${msg.mediaUrl ? `<img src="${msg.mediaUrl}" class="rounded-lg max-h-48 w-full object-cover mb-2 border border-black/20" alt="Attachment" onerror="this.remove()"/>` : ''}
+                                        ${escapeHTML(msg.text)}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    messagesContainer.appendChild(msgEl);
+                });
+
+                // Auto Scroll to Bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            function renderMembers() {
+                if (!state.roomData) return;
+                membersList.innerHTML = '';
+
+                const members = state.roomData.members || [];
+                memberCapacityBadge.textContent = `${members.length}/${state.roomData.capacity}`;
+
+                members.forEach(m => {
+                    const isSelf = m.id === state.currentUserId;
+                    const item = document.createElement('div');
+                    item.className = 'flex items-center justify-between p-2 rounded-xl bg-slate-950/40 border border-slate-800/60';
+                    
+                    const color = getAvatarColor(m.name);
+
+                    item.innerHTML = `
+                        <div class="flex items-center gap-2.5 truncate">
+                            <div class="w-7 h-7 rounded-full ${color} text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                ${escapeHTML(m.name.charAt(0).toUpperCase())}
+                            </div>
+                            <span class="text-xs font-medium text-slate-300 truncate">${escapeHTML(m.name)}</span>
+                        </div>
+                        ${isSelf ? '<span class="text-[10px] bg-brand-500/20 text-brand-300 px-2 py-0.5 rounded-full font-semibold border border-brand-500/30">You</span>' : ''}
+                    `;
+
+                    membersList.appendChild(item);
+                });
+            }
+
+            // Send Message Event
+            formSendMessage.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const text = chatInput.value.trim();
+                if (!text) return;
+
+                sendMessage(text);
+                chatInput.value = '';
+                emojiDrawer.classList.add('hidden');
+            });
+
+            function sendMessage(text, mediaUrl = null) {
+                if (!state.roomCode) return;
+
+                const rooms = getStoredRooms();
+                const room = rooms[state.roomCode];
+
+                if (!room) return;
+
+                const newMsg = {
+                    id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+                    type: 'user',
+                    userId: state.currentUserId,
+                    sender: state.username,
+                    text: text,
+                    mediaUrl: mediaUrl,
+                    timestamp: Date.now()
+                };
+
+                room.messages.push(newMsg);
+                rooms[state.roomCode] = room;
+                saveRooms(rooms);
+                state.roomData = room;
+
+                renderMessages();
+                broadcastEvent('NEW_MESSAGE', newMsg);
+            }
+
+            // =========================================================================
+            // EMOJI & MEDIA ACTIONS
+            // =========================================================================
+            btnToggleEmoji.addEventListener('click', (e) => {
+                e.stopPropagation();
+                emojiDrawer.classList.toggle('hidden');
+            });
+
+            btnCloseEmoji.addEventListener('click', () => {
+                emojiDrawer.classList.add('hidden');
+            });
+
+            // Click outside to close emoji drawer
+            document.addEventListener('click', (e) => {
+                if (!emojiDrawer.contains(e.target) && e.target !== btnToggleEmoji) {
+                    emojiDrawer.classList.add('hidden');
+                }
+            });
+
+            // Emoji Selection
+            emojiGrid.addEventListener('click', (e) => {
+                if (e.target.classList.contains('emoji-btn')) {
+                    const emoji = e.target.textContent;
+                    chatInput.value += emoji;
+                    chatInput.focus();
+                }
+            });
+
+            // Quick Reaction Attachment Mock
+            btnSendImage.addEventListener('click', () => {
+                const sampleGifs = [
+                    'https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&auto=format&fit=crop&q=60',
+                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=60',
+                    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=500&auto=format&fit=crop&q=60'
+                ];
+                const randomImg = sampleGifs[Math.floor(Math.random() * sampleGifs.length)];
+                sendMessage('Shared a reaction card 📸', randomImg);
+            });
+
+            // =========================================================================
+            // AUXILIARY UTILITIES
+            // =========================================================================
+            // Copy Code to Clipboard
+            btnCopyCode.addEventListener('click', () => {
+                const code = state.roomCode;
+                if (!code) return;
+
+                // Fallback copy execution for iframe safety
+                const tempInput = document.createElement('textarea');
+                tempInput.value = code;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('Room code copied to clipboard!', 'success');
+                } catch (err) {
+                    showToast('Failed to copy code', 'error');
+                }
+                document.body.removeChild(tempInput);
+            });
+
+            // Share Invite Link
+            btnShareLink.addEventListener('click', () => {
+                showToast(`Share Code: ${state.roomCode} with your friends!`, 'info');
+            });
+
+            // Clear Chat Messages locally
+            btnClearChat.addEventListener('click', () => {
+                if (!state.roomCode) return;
+                const rooms = getStoredRooms();
+                if (rooms[state.roomCode]) {
+                    rooms[state.roomCode].messages = [
+                        {
+                            id: 'msg_sys_cleared_' + Date.now(),
+                            type: 'system',
+                            text: `${state.username} cleared the chat history.`,
+                            timestamp: Date.now()
+                        }
+                    ];
+                    saveRooms(rooms);
+                    state.roomData = rooms[state.roomCode];
+                    renderMessages();
+                    broadcastEvent('CHAT_CLEARED');
+                    showToast('Chat history cleared.', 'info');
+                }
+            });
+
+            // Leave Room
+            btnLeaveRoom.addEventListener('click', () => {
+                if (!state.roomCode) return;
+
+                const rooms = getStoredRooms();
+                const room = rooms[state.roomCode];
+
+                if (room) {
+                    // Remove current user from members
+                    room.members = room.members.filter(m => m.id !== state.currentUserId);
+                    room.messages.push({
+                        id: 'msg_sys_leave_' + Date.now(),
+                        type: 'system',
+                        text: `${state.username} left the room.`,
+                        timestamp: Date.now()
+                    });
+
+                    saveRooms(rooms);
+                    broadcastEvent('USER_LEFT', { username: state.username });
+                }
+
+                // Cleanup session & channel
+                if (state.channel) {
+                    state.channel.close();
+                    state.channel = null;
+                }
+                localStorage.removeItem(STORAGE_KEY_SESSION);
+
+                state.roomCode = null;
+                state.roomData = null;
+
+                // Switch back to Main Screen
+                screenChat.classList.add('hidden');
+                screenMain.classList.remove('hidden');
+                updateHomeScreenStats();
+                showToast('Left the room.', 'info');
+            });
+
+            // Toggle Mobile Sidebar
+            btnToggleSidebar.addEventListener('click', () => {
+                sidebarMembers.classList.toggle('translate-x-full');
+            });
+
+            // Consistent Avatar Color Generator
+            function getAvatarColor(name) {
+                const colors = [
+                    'bg-indigo-600', 'bg-purple-600', 'bg-pink-600',
+                    'bg-emerald-600', 'bg-amber-600', 'bg-cyan-600', 'bg-rose-600'
+                ];
+                let hash = 0;
+                for (let i = 0; i < name.length; i++) {
+                    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                return colors[Math.abs(hash) % colors.length];
+            }
+
+            // Real-time synchronization across local storage events
+            window.addEventListener('storage', (e) => {
+                if (e.key === STORAGE_KEY_ROOMS && state.roomCode) {
+                    const rooms = getStoredRooms();
+                    if (rooms[state.roomCode]) {
+                        state.roomData = rooms[state.roomCode];
+                        renderMessages();
+                        renderMembers();
+                    }
+                }
+            });
+
+            // Auto Reconnect Session on Page Refresh
+            function initSession() {
+                updateHomeScreenStats();
+                try {
+                    const savedSession = localStorage.getItem(STORAGE_KEY_SESSION);
+                    if (savedSession) {
+                        const { roomCode, username } = JSON.parse(savedSession);
+                        const rooms = getStoredRooms();
+                        if (rooms[roomCode]) {
+                            joinLobby(roomCode, username);
+                        } else {
+                            localStorage.removeItem(STORAGE_KEY_SESSION);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Session restoration failed', e);
+                }
+            }
+
+            // Run Init
+            initSession();
+
+        })();
+    </script>
+</body>
+</html>
